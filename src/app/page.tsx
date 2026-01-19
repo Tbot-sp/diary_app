@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
 import { LogOut, Plus, Book, Calendar, Trash2, Edit3, X } from "lucide-react";
+import AES from 'crypto-js/aes';
+import encUtf8 from 'crypto-js/enc-utf8';
 
 export default function Home() {
   const router = useRouter();
@@ -56,6 +59,28 @@ export default function Home() {
     router.push("/login");
   };
 
+  // Encryption Helper
+  const encrypt = (text: string) => {
+    const key = localStorage.getItem("diary_key");
+    if (!key) return text;
+    return AES.encrypt(text, key).toString();
+  };
+
+  const decrypt = (ciphertext: string) => {
+    const key = localStorage.getItem("diary_key");
+    if (!key) return ciphertext;
+    try {
+      const bytes = AES.decrypt(ciphertext, key);
+      const originalText = bytes.toString(encUtf8);
+      // If decryption yields empty string but ciphertext wasn't, it might mean failure or empty content.
+      // However, AES.decrypt usually returns something. If key is wrong, it might return garbage.
+      // If ciphertext is not valid base64/aes, it might throw or return empty.
+      return originalText || ciphertext; // Fallback to original if decryption "fails" (e.g. not encrypted)
+    } catch (e) {
+      return ciphertext; // Not encrypted or error
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) return;
@@ -65,13 +90,13 @@ export default function Home() {
       if (editingId) {
         await updateDiary({
           id: editingId,
-          title,
-          content,
+          title: encrypt(title),
+          content: encrypt(content),
         });
       } else {
         await saveDiary({
-          title,
-          content,
+          title: encrypt(title),
+          content: encrypt(content),
           userId
         });
       }
@@ -87,8 +112,8 @@ export default function Home() {
 
   const handleEdit = (diary: any) => {
     setEditingId(diary._id);
-    setTitle(diary.title);
-    setContent(diary.content);
+    setTitle(decrypt(diary.title));
+    setContent(decrypt(diary.content));
     // Scroll to top or form on mobile
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -273,10 +298,10 @@ export default function Home() {
                 >
                   <div className="flex justify-between items-start mb-6 relative z-10">
                     <div className="space-y-2">
-                      <h3 className="text-xl font-bold text-zinc-100 group-hover:text-indigo-300 transition-colors leading-tight">
-                        {diary.title}
-                      </h3>
-                      <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                        <h3 className="text-xl font-bold text-zinc-100 group-hover:text-indigo-300 transition-colors leading-tight">
+                          {decrypt(diary.title)}
+                        </h3>
+                        <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-widest">
                         <Calendar className="w-3.5 h-3.5" />
                         {new Date(diary._creationTime).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                       </div>
@@ -299,7 +324,7 @@ export default function Home() {
                     </div>
                   </div>
                   <p className="text-zinc-400 leading-relaxed whitespace-pre-wrap relative z-10 line-clamp-6 group-hover:line-clamp-none transition-all">
-                    {diary.content}
+                    {decrypt(diary.content)}
                   </p>
                   
                   {/* Subtle card glow on hover */}

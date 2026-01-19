@@ -33,6 +33,7 @@ export default function LoginPage() {
         if (existingUser.password === password) {
           // Success
           localStorage.setItem("diary_user", account);
+          localStorage.setItem("diary_key", password); // Use password as encryption key
           router.push("/");
         } else {
           setError("密碼錯誤，請重新輸入");
@@ -41,6 +42,7 @@ export default function LoginPage() {
         // Auto-register if user doesn't exist
         await createUser({ account, password });
         localStorage.setItem("diary_user", account);
+        localStorage.setItem("diary_key", password); // Use password as encryption key
         router.push("/");
       }
     } catch (err) {
