@@ -16,6 +16,24 @@ export default function Home() {
   const [editingId, setEditingId] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [stars, setStars] = useState<Array<{id: number, top: string, left: string, size: string, duration: string, delay: string, opacity: number}>>([]);
+
+  // Generate stars on client side to avoid hydration mismatch
+  useEffect(() => {
+    const generateStars = () => {
+      return Array.from({ length: 100 }).map((_, i) => ({
+        id: i,
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        size: `${Math.random() * 3 + 1}px`,
+        duration: `${Math.random() * 3 + 2}s`,
+        delay: `${Math.random() * 5}s`,
+        opacity: Math.random() * 0.7 + 0.3,
+      }));
+    };
+    setStars(generateStars());
+  }, []);
+
   // Check auth on mount
   useEffect(() => {
     const user = localStorage.getItem("diary_user");
@@ -97,9 +115,34 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-zinc-950 text-white selection:bg-indigo-500/30 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse delay-1000" />
+        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-blue-600/5 blur-[100px] rounded-full animate-bounce duration-[10000ms] opacity-50" />
+        
+        {/* Starry Sky */}
+        {stars.map((star) => (
+          <div
+            key={star.id}
+            className="absolute bg-white rounded-full animate-pulse"
+            style={{
+              top: star.top,
+              left: star.left,
+              width: star.size,
+              height: star.size,
+              opacity: star.opacity,
+              animationDuration: star.duration,
+              animationDelay: star.delay,
+              boxShadow: `0 0 ${parseInt(star.size) * 2}px rgba(255, 255, 255, 0.8)`
+            }}
+          />
+        ))}
+      </div>
+
       {/* Navbar */}
-      <nav className="border-b border-white/10 bg-white/[0.02] backdrop-blur-xl sticky top-0 z-50">
+      <nav className="border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-indigo-500/10 rounded-lg">
@@ -123,7 +166,7 @@ export default function Home() {
         </div>
       </nav>
 
-      <main className="max-w-5xl mx-auto px-6 py-10 space-y-12">
+      <main className="max-w-5xl mx-auto px-6 py-10 space-y-12 relative z-10">
         
         {/* Top Section: Wider Input Form */}
         <section className="w-full">
