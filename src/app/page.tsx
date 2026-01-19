@@ -9,6 +9,8 @@ import { LogOut, Plus, Book, Calendar, Trash2, Edit3, X } from "lucide-react";
 import AES from 'crypto-js/aes';
 import encUtf8 from 'crypto-js/enc-utf8';
 
+const MOODS = ["🌞", "☁️", "🌧️", "⚡", "❄️", "🌈", "🔥", "💤"];
+
 export default function Home() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
@@ -16,6 +18,7 @@ export default function Home() {
   // State for new/editing diary entry
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [mood, setMood] = useState("");
   const [editingId, setEditingId] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -92,11 +95,13 @@ export default function Home() {
           id: editingId,
           title: encrypt(title),
           content: encrypt(content),
+          mood: encrypt(mood),
         });
       } else {
         await saveDiary({
           title: encrypt(title),
           content: encrypt(content),
+          mood: encrypt(mood),
           userId
         });
       }
@@ -114,6 +119,7 @@ export default function Home() {
     setEditingId(diary._id);
     setTitle(decrypt(diary.title));
     setContent(decrypt(diary.content));
+    setMood(diary.mood ? decrypt(diary.mood) : "");
     // Scroll to top or form on mobile
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -132,6 +138,7 @@ export default function Home() {
   const resetForm = () => {
     setTitle("");
     setContent("");
+    setMood("");
     setEditingId(null);
   };
 
@@ -242,6 +249,26 @@ export default function Home() {
                     className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-lg leading-relaxed text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all resize-none shadow-inner"
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">心情</label>
+                  <div className="flex gap-4 flex-wrap">
+                    {MOODS.map(m => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setMood(m)}
+                        className={`text-2xl p-4 rounded-2xl transition-all border ${
+                          mood === m 
+                            ? "bg-indigo-500/20 border-indigo-500/50 scale-110 shadow-lg shadow-indigo-500/20" 
+                            : "bg-white/[0.03] border-white/10 hover:bg-white/[0.08] hover:scale-105"
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end pt-2">
@@ -298,8 +325,9 @@ export default function Home() {
                 >
                   <div className="flex justify-between items-start mb-6 relative z-10">
                     <div className="space-y-2">
-                        <h3 className="text-xl font-bold text-zinc-100 group-hover:text-indigo-300 transition-colors leading-tight">
-                          {decrypt(diary.title)}
+                        <h3 className="text-xl font-bold text-zinc-100 group-hover:text-indigo-300 transition-colors leading-tight flex items-center gap-2">
+                          <span>{decrypt(diary.title)}</span>
+                          {diary.mood && <span className="text-2xl" title="當時的心情">{decrypt(diary.mood)}</span>}
                         </h3>
                         <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-widest">
                         <Calendar className="w-3.5 h-3.5" />

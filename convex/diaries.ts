@@ -23,21 +23,23 @@ export const update = mutation({
     args: { 
         id: v.id("diaries"), 
         title: v.string(), 
-        content: v.string() 
+        content: v.string(),
+        mood: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const { id, title, content } = args;
-        await ctx.db.patch(id, { title, content });
+        const { id, title, content, mood } = args;
+        await ctx.db.patch(id, { title, content, mood });
     },
 });
 
 export const save = mutation({
-    args:{ title: v.string(),  content: v.string() ,userId: v.string(),},
+    args:{ title: v.string(),  content: v.string() ,userId: v.string(), mood: v.optional(v.string())},
     handler: async (ctx,args) => {
         const id =  await ctx.db.insert("diaries", {
             title:args.title,
             userId: args.userId,
             content: args.content,
+            mood: args.mood,
         })
         return id
     },
