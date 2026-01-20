@@ -1,5 +1,6 @@
 "use client";
 
+// 为什么要引入这些包呢
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -7,23 +8,34 @@ import { useRouter } from "next/navigation";
 import { Lock, User, Sparkles, Loader2, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
-  const [account, setAccount] = useState("");
+
+  // 登陆页面，需要提供account输入
+  //const [account, ]   
+  // 这个值，要在用户修改的时候随时改变 --> 需要采用React中的useState("")
+  // 还需要有一个人来具体帮忙改值，所以需要setAccount
+  //const [account, setAccount] = useState("")
+
+  const [account, setAccount] = useState("1"); //用来定义会随着用户操作而改变的变量，並且當這些變量改變時，React 會自動 重新渲染 頁面。
   const [password, setPassword] = useState("");
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   
-  const router = useRouter();
+  const router = useRouter(); //用来处理页面跳转？
   
   // Use Convex mutations/queries
   const createUser = useMutation(api.users.user_creation);
   const allUsers = useQuery(api.users.users);
 
+
+  
+  // e就是event，捕獲React.FormEvent
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); 
     setIsLoading(true);
     setError("");
 
-    try {
+    try { //处理登陆逻辑
       // Simple client-side auth logic (for learning purpose)
       // In production, this should be done securely on the server/auth provider
       const existingUser = allUsers?.find(u => u.account === account);

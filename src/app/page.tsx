@@ -84,6 +84,15 @@ export default function Home() {
     }
   };
 
+  const decryptMood = (ciphertext: string | undefined) => {
+    if (!ciphertext) return "";
+    const decrypted = decrypt(ciphertext);
+    // 如果解密結果等於密文本身，且密文看起來像 AES 加密串，
+    // 或者解密結果為空，說明這可能是一個無效的或空的加密心情
+    if (decrypted === ciphertext && ciphertext.length > 10) return "";
+    return decrypted;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) return;
@@ -95,13 +104,13 @@ export default function Home() {
           id: editingId,
           title: encrypt(title),
           content: encrypt(content),
-          mood: encrypt(mood),
+          mood: mood ? encrypt(mood) : undefined,
         });
       } else {
         await saveDiary({
           title: encrypt(title),
           content: encrypt(content),
-          mood: encrypt(mood),
+          mood: mood ? encrypt(mood) : undefined,
           userId
         });
       }
@@ -327,7 +336,7 @@ export default function Home() {
                     <div className="space-y-2">
                         <h3 className="text-xl font-bold text-zinc-100 group-hover:text-indigo-300 transition-colors leading-tight flex items-center gap-2">
                           <span>{decrypt(diary.title)}</span>
-                          {diary.mood && <span className="text-2xl" title="當時的心情">{decrypt(diary.mood)}</span>}
+                          {decryptMood(diary.mood) && <span className="text-2xl" title="當時的心情">{decryptMood(diary.mood)}</span>}
                         </h3>
                         <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-widest">
                         <Calendar className="w-3.5 h-3.5" />
