@@ -3,13 +3,21 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataModel";
+import type { Id } from "../../convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
-import { LogOut, Plus, Book, Calendar, Trash2, Edit3, X } from "lucide-react";
+import { LogOut, Plus, Book, Calendar, Trash2, Edit3, X, ChevronDown } from "lucide-react";
 import AES from 'crypto-js/aes';
 import encUtf8 from 'crypto-js/enc-utf8';
 
 const MOODS = ["🌞", "☁️", "🌧️", "⚡", "❄️", "🌈", "🔥", "💤"];
+
+type DiaryItem = {
+  _id: Id<"diaries">;
+  title: string;
+  content: string;
+  mood?: string;
+  _creationTime: number;
+};
 
 export default function Home() {
   const router = useRouter();
@@ -19,8 +27,9 @@ export default function Home() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [mood, setMood] = useState("");
-  const [editingId, setEditingId] = useState<any>(null);
+  const [editingId, setEditingId] = useState<Id<"diaries"> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const [stars, setStars] = useState<Array<{id: number, top: string, left: string, size: string, duration: string, delay: string, opacity: number}>>([]);
 
@@ -79,7 +88,7 @@ export default function Home() {
       // However, AES.decrypt usually returns something. If key is wrong, it might return garbage.
       // If ciphertext is not valid base64/aes, it might throw or return empty.
       return originalText || ciphertext; // Fallback to original if decryption "fails" (e.g. not encrypted)
-    } catch (e) {
+    } catch {
       return ciphertext; // Not encrypted or error
     }
   };
@@ -124,16 +133,17 @@ export default function Home() {
     }
   };
 
-  const handleEdit = (diary: any) => {
+  const handleEdit = (diary: DiaryItem) => {
     setEditingId(diary._id);
     setTitle(decrypt(diary.title));
     setContent(decrypt(diary.content));
     setMood(diary.mood ? decrypt(diary.mood) : "");
+    setIsExpanded(true);
     // Scroll to top or form on mobile
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (id: any) => {
+  const handleDelete = async (id: Id<"diaries">) => {
     if (confirm("確定要刪除這篇日記嗎？")) {
       try {
         await removeDiary({ id });
@@ -209,91 +219,114 @@ export default function Home() {
 
       <main className="max-w-5xl mx-auto px-6 py-10 space-y-12 relative z-10">
         
-        {/* Top Section: Wider Input Form */}
+        {/* Top Section: Collapsible Input Form */}
         <section className="w-full">
-          <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group">
+          <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
             {/* Subtle background glow for the form */}
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-indigo-500/20 transition-all duration-700" />
             
-            <h2 className="text-2xl font-bold mb-8 flex items-center justify-between relative z-10">
-              <span className="flex items-center gap-3">
+            {/* Header / Trigger */}
+            <div 
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-8 flex items-center justify-between relative z-10 cursor-pointer select-none"
+            >
+              <h2 className="text-2xl font-bold flex items-center gap-3">
                 <div className={`p-2.5 rounded-2xl ${editingId ? 'bg-emerald-500/10 text-emerald-400' : 'bg-indigo-500/10 text-indigo-400'}`}>
                   {editingId ? <Edit3 className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
                 </div>
                 {editingId ? "修改這篇精彩的回憶" : "今天有什麼值得記錄的？"}
-              </span>
-              {editingId && (
-                <button 
-                  onClick={resetForm}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 rounded-xl text-zinc-400 hover:text-white transition-all text-sm font-medium border border-transparent hover:border-white/10"
-                >
-                  <X className="w-4 h-4" />
-                  取消編輯
-                </button>
-              )}
-            </h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-              <div className="grid grid-cols-1 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">標題</label>
-                  <input
-                    type="text"
-                    required
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="給這段回憶起個名字..."
-                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-xl font-medium text-white placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all shadow-inner"
-                  />
-                </div>
+              </h2>
+
+              <div className="flex items-center gap-4">
+                {editingId && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      resetForm();
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 rounded-xl text-zinc-400 hover:text-white transition-all text-sm font-medium border border-transparent hover:border-white/10"
+                  >
+                    <X className="w-4 h-4" />
+                    取消編輯
+                  </button>
+                )}
                 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">內容</label>
-                  <textarea
-                    required
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="在這裡盡情傾訴..."
-                    rows={8}
-                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-lg leading-relaxed text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all resize-none shadow-inner"
-                  />
+                <div className={`p-2 rounded-full bg-white/5 transition-transform duration-500 ${isExpanded ? 'rotate-180' : ''}`}>
+                  <ChevronDown className="w-6 h-6 text-zinc-400" />
                 </div>
+              </div>
+            </div>
+            
+            {/* Collapsible Content */}
+            <div 
+              className={`transition-all duration-700 ease-in-out overflow-hidden ${
+                isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="px-8 pb-8 relative z-10">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">標題</label>
+                      <input
+                        type="text"
+                        required
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="給這段回憶起個名字..."
+                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-xl font-medium text-white placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all shadow-inner"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">內容</label>
+                      <textarea
+                        required
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        placeholder="在這裡盡情傾訴..."
+                        rows={8}
+                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-lg leading-relaxed text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all resize-none shadow-inner"
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">心情</label>
-                  <div className="flex gap-4 flex-wrap">
-                    {MOODS.map(m => (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => setMood(m)}
-                        className={`text-2xl p-4 rounded-2xl transition-all border ${
-                          mood === m 
-                            ? "bg-indigo-500/20 border-indigo-500/50 scale-110 shadow-lg shadow-indigo-500/20" 
-                            : "bg-white/[0.03] border-white/10 hover:bg-white/[0.08] hover:scale-105"
-                        }`}
-                      >
-                        {m}
-                      </button>
-                    ))}
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">心情</label>
+                      <div className="flex gap-4 flex-wrap">
+                        {MOODS.map(m => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => setMood(m)}
+                            className={`text-2xl p-4 rounded-2xl transition-all border ${
+                              mood === m 
+                                ? "bg-indigo-500/20 border-indigo-500/50 scale-110 shadow-lg shadow-indigo-500/20" 
+                                : "bg-white/[0.03] border-white/10 hover:bg-white/[0.08] hover:scale-105"
+                            }`}
+                          >
+                            {m}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="flex justify-end pt-2">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className={`px-10 py-4 font-bold rounded-2xl transition-all shadow-xl flex items-center justify-center gap-3 text-lg ${
-                    editingId 
-                      ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/25" 
-                      : "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/25"
-                  } disabled:bg-zinc-800 text-white active:scale-95`}
-                >
-                  {isSubmitting ? "處理中..." : editingId ? "完成修改" : "保存這段時光"}
-                </button>
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={`px-10 py-4 font-bold rounded-2xl transition-all shadow-xl flex items-center justify-center gap-3 text-lg ${
+                        editingId 
+                          ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/25" 
+                          : "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/25"
+                      } disabled:bg-zinc-800 text-white active:scale-95`}
+                    >
+                      {isSubmitting ? "處理中..." : editingId ? "完成修改" : "保存這段時光"}
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
         </section>
 
