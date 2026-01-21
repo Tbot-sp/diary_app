@@ -603,12 +603,12 @@ export default function Home() {
 
       {/* Reading Modal */}
       {readingDiary && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center px-4 pb-6 pt-28 sm:p-6">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
           <div 
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => setReadingDiary(null)}
           />
-          <div className="relative w-full max-w-3xl max-h-[80vh] sm:max-h-[85vh] bg-zinc-900/95 border border-white/10 rounded-3xl shadow-2xl flex flex-col animate-in fade-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200">
+          <div className="relative w-full max-w-3xl max-h-[80vh] bg-zinc-900/95 border border-white/10 rounded-3xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
             
             {/* Modal Header */}
             <div className="flex-none flex items-center justify-between p-6 border-b border-white/5 bg-zinc-900/95 backdrop-blur-xl rounded-t-3xl">
