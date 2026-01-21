@@ -231,7 +231,7 @@ export default function Home() {
               className="p-8 flex items-center justify-between relative z-10 cursor-pointer select-none"
             >
               <h2 className="text-2xl font-bold flex items-center gap-3">
-                <div className={`p-2.5 rounded-2xl ${editingId ? 'bg-emerald-500/10 text-emerald-400' : 'bg-indigo-500/10 text-indigo-400'}`}>
+                <div className={`p-2.5 rounded-2xl ${editingId ? 'bg-purple-500/10 text-purple-400' : 'bg-indigo-500/10 text-indigo-400'}`}>
                   {editingId ? <Edit3 className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
                 </div>
                 {editingId ? "修改這篇精彩的回憶" : "今天有什麼值得記錄的？"}
@@ -317,7 +317,7 @@ export default function Home() {
                       disabled={isSubmitting}
                       className={`px-10 py-4 font-bold rounded-2xl transition-all shadow-xl flex items-center justify-center gap-3 text-lg ${
                         editingId 
-                          ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/25" 
+                          ? "bg-purple-600 hover:bg-purple-500 shadow-purple-500/25" 
                           : "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/25"
                       } disabled:bg-zinc-800 text-white active:scale-95`}
                     >
