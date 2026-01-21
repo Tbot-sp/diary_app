@@ -9,6 +9,7 @@
  */
 
 import type * as diaries from "../diaries.js";
+import type * as tags from "../tags.js";
 import type * as users from "../users.js";
 
 import type {
@@ -19,6 +20,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   diaries: typeof diaries;
+  tags: typeof tags;
   users: typeof users;
 }>;
 

@@ -7,10 +7,17 @@ export default defineSchema({
     content: v.string(),
     userId: v.string(),
     mood: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
   }).index("by_user", ["userId"]),
-    users: defineTable({
+  users: defineTable({
     account: v.string(),
     password: v.string(),
-}),
-  });
+  }),
+  tags: defineTable({
+    name: v.string(),
+    userId: v.string(),
+  })
+  .index("by_user", ["userId"])
+  .index("by_user_name", ["userId", "name"]),
+});
 

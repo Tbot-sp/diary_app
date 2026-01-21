@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
-import { LogOut, Plus, Book, Calendar, Trash2, Edit3, X, ChevronDown } from "lucide-react";
+import { LogOut, Plus, Book, Calendar, Trash2, Edit3, X, ChevronDown, Tag, Filter, Search } from "lucide-react";
 import AES from 'crypto-js/aes';
 import encUtf8 from 'crypto-js/enc-utf8';
 
@@ -16,6 +16,7 @@ type DiaryItem = {
   title: string;
   content: string;
   mood?: string;
+  tags?: string[];
   _creationTime: number;
 };
 
@@ -27,9 +28,16 @@ export default function Home() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [mood, setMood] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
   const [editingId, setEditingId] = useState<Id<"diaries"> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Filter state
+  const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [isTagFilterOpen, setIsTagFilterOpen] = useState(false);
+  const [tagSearchQuery, setTagSearchQuery] = useState("");
 
   const [stars, setStars] = useState<Array<{id: number, top: string, left: string, size: string, duration: string, delay: string, opacity: number}>>([]);
 
@@ -61,7 +69,8 @@ export default function Home() {
 
   // Convex hooks
   // Only run query if userId is present to avoid errors or empty queries
-  const diaries = useQuery(api.diaries.list2, userId ? { userId } : "skip");
+  const diaries = useQuery(api.diaries.list2, userId ? { userId, tag: filterTag ?? undefined } : "skip");
+  const allTags = useQuery((api as any).tags.list, userId ? { userId } : "skip");
   const saveDiary = useMutation(api.diaries.save);
   const updateDiary = useMutation(api.diaries.update);
   const removeDiary = useMutation(api.diaries.remove);
@@ -114,13 +123,15 @@ export default function Home() {
           title: encrypt(title),
           content: encrypt(content),
           mood: mood ? encrypt(mood) : undefined,
+          tags,
         });
       } else {
         await saveDiary({
           title: encrypt(title),
           content: encrypt(content),
           mood: mood ? encrypt(mood) : undefined,
-          userId
+          userId,
+          tags,
         });
       }
       // Clear form
@@ -138,6 +149,7 @@ export default function Home() {
     setTitle(decrypt(diary.title));
     setContent(decrypt(diary.content));
     setMood(diary.mood ? decrypt(diary.mood) : "");
+    setTags(diary.tags || []);
     setIsExpanded(true);
     // Scroll to top or form on mobile
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -158,7 +170,36 @@ export default function Home() {
     setTitle("");
     setContent("");
     setMood("");
+    setTags([]);
     setEditingId(null);
+  };
+
+  const handleAddTag = (e: React.KeyboardEvent | React.MouseEvent) => {
+    if ((e.type === 'keydown' && (e as React.KeyboardEvent).key !== 'Enter') || !tagInput.trim()) return;
+    e.preventDefault();
+    e.stopPropagation(); // Stop form submission if inside form
+    const newTag = tagInput.trim();
+    if (tags.length >= 3) {
+      alert("最多只能添加3個標籤");
+      return;
+    }
+    if (!tags.includes(newTag)) {
+      setTags([...tags, newTag]);
+    }
+    setTagInput("");
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(t => t !== tagToRemove));
+  };
+
+  const handleSelectTag = (tag: string) => {
+    if (tags.includes(tag)) return;
+    if (tags.length >= 3) {
+      alert("最多只能添加3個標籤");
+      return;
+    }
+    setTags([...tags, tag]);
   };
 
   if (!userId) {
@@ -309,6 +350,53 @@ export default function Home() {
                         ))}
                       </div>
                     </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">標籤 (最多3個)</label>
+                      <div className="flex flex-wrap gap-2 mb-2 p-3 bg-white/[0.03] border border-white/10 rounded-2xl">
+                        {tags.map(tag => (
+                          <span key={tag} className="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-sm flex items-center gap-1 border border-indigo-500/30">
+                            {tag}
+                            <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-white transition-colors"><X className="w-3 h-3" /></button>
+                          </span>
+                        ))}
+                        <div className="relative flex items-center flex-1 min-w-[120px]">
+                            <input
+                              type="text"
+                              value={tagInput}
+                              onChange={(e) => setTagInput(e.target.value)}
+                              onKeyDown={handleAddTag}
+                              placeholder={tags.length >= 3 ? "標籤已滿" : "輸入標籤按 Enter 添加..."}
+                              disabled={tags.length >= 3}
+                              className="bg-transparent py-1 px-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none w-full"
+                            />
+                             <button 
+                                type="button" 
+                                onClick={handleAddTag} 
+                                disabled={!tagInput.trim() || tags.length >= 3} 
+                                className="ml-2 p-1 bg-white/5 hover:bg-indigo-500 rounded-lg text-zinc-500 hover:text-white disabled:opacity-50 transition-all"
+                             >
+                                <Plus className="w-4 h-4" />
+                             </button>
+                        </div>
+                      </div>
+                      {/* Suggestions */}
+                      {allTags && allTags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2 px-1">
+                            <span className="text-xs text-zinc-600 self-center font-medium">常用標籤:</span>
+                            {allTags.filter((t: any) => !tags.includes(t.name)).slice(0, 5).map((t: any) => (
+                                <button
+                                    key={t._id}
+                                    type="button"
+                                    onClick={() => handleSelectTag(t.name)}
+                                    className="text-xs px-2.5 py-1 bg-white/5 hover:bg-indigo-500/20 border border-white/5 hover:border-indigo-500/30 rounded-lg text-zinc-400 hover:text-indigo-300 transition-all"
+                                >
+                                    {t.name}
+                                </button>
+                            ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex justify-end pt-2">
@@ -332,15 +420,93 @@ export default function Home() {
 
         {/* Bottom Section: Diary List */}
         <section className="space-y-8">
-          <div className="flex items-center justify-between border-b border-white/5 pb-4">
+          <div className="flex items-center justify-between border-b border-white/5 pb-4 flex-wrap gap-4">
             <h2 className="text-2xl font-bold flex items-center gap-3">
               <div className="p-2 bg-indigo-500/10 rounded-xl">
                 <Book className="w-6 h-6 text-indigo-400" />
               </div>
               過往回憶
             </h2>
-            <div className="text-sm text-zinc-500 font-medium">
-              共計 <span className="text-indigo-400">{diaries?.length || 0}</span> 篇日記
+            
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-zinc-500 font-medium whitespace-nowrap">
+                共計 <span className="text-indigo-400">{diaries?.length || 0}</span> 篇日記
+              </div>
+
+              {/* Tag Filter Dropdown */}
+              <div className="relative">
+                  <button
+                      onClick={() => setIsTagFilterOpen(!isTagFilterOpen)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
+                          filterTag 
+                          ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" 
+                          : "bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10 hover:text-white"
+                      }`}
+                  >
+                      <Filter className="w-4 h-4" />
+                      {filterTag ? filterTag : "篩選標籤"}
+                      {filterTag && <X className="w-3 h-3 ml-1" onClick={(e) => { e.stopPropagation(); setFilterTag(null); }} />}
+                  </button>
+
+                  {isTagFilterOpen && (
+                      <>
+                          {/* Backdrop to close on click outside */}
+                          <div className="fixed inset-0 z-40" onClick={() => setIsTagFilterOpen(false)} />
+                          
+                          {/* Dropdown Panel */}
+                          <div className="absolute right-0 top-full mt-2 w-72 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
+                              <div className="relative mb-3">
+                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                                  <input
+                                      type="text"
+                                      placeholder="搜尋標籤..."
+                                      value={tagSearchQuery}
+                                      onChange={(e) => setTagSearchQuery(e.target.value)}
+                                      autoFocus
+                                      className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
+                                  />
+                              </div>
+
+                              <div className="max-h-[300px] overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                                  <button
+                                      onClick={() => { setFilterTag(null); setIsTagFilterOpen(false); }}
+                                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2 ${
+                                          filterTag === null
+                                              ? "bg-indigo-500/20 text-indigo-300"
+                                              : "hover:bg-white/5 text-zinc-400 hover:text-white"
+                                      }`}
+                                  >
+                                      <span className="w-2 h-2 rounded-full bg-current opacity-50" />
+                                      顯示全部
+                                  </button>
+                                  
+                                  {allTags
+                                      ?.filter((t: any) => t.name.toLowerCase().includes(tagSearchQuery.toLowerCase()))
+                                      .map((t: any) => (
+                                      <button
+                                          key={t._id}
+                                          onClick={() => { setFilterTag(t.name); setIsTagFilterOpen(false); }}
+                                          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2 group ${
+                                              filterTag === t.name
+                                                  ? "bg-indigo-500/20 text-indigo-300"
+                                                  : "hover:bg-white/5 text-zinc-400 hover:text-white"
+                                          }`}
+                                      >
+                                          <Tag className={`w-3.5 h-3.5 ${filterTag === t.name ? "text-indigo-400" : "text-zinc-600 group-hover:text-zinc-400"}`} />
+                                          {t.name}
+                                      </button>
+                                  ))}
+                                  
+                                  {allTags && allTags.length === 0 && (
+                                      <div className="text-center py-4 text-xs text-zinc-600">
+                                          暫無標籤
+                                      </div>
+                                  )}
+                              </div>
+                          </div>
+                      </>
+                  )}
+              </div>
             </div>
           </div>
 
@@ -371,7 +537,17 @@ export default function Home() {
                           <span>{decrypt(diary.title)}</span>
                           {decryptMood(diary.mood) && <span className="text-2xl" title="當時的心情">{decryptMood(diary.mood)}</span>}
                         </h3>
-                        <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                        {diary.tags && diary.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {diary.tags.map(tag => (
+                              <span key={tag} className="text-xs px-2 py-1 bg-indigo-500/10 text-indigo-300 rounded-md border border-indigo-500/20 flex items-center gap-1">
+                                <Tag className="w-3 h-3" />
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-widest pt-1">
                         <Calendar className="w-3.5 h-3.5" />
                         {new Date(diary._creationTime).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                       </div>
