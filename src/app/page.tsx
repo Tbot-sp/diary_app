@@ -34,6 +34,18 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [readingDiary, setReadingDiary] = useState<DiaryItem | null>(null);
+
+  // Prevent body scroll when reading modal is open
+  useEffect(() => {
+    if (readingDiary) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [readingDiary]);
   
   // Filter state
   const [filterTag, setFilterTag] = useState<string | null>(null);
