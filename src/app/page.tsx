@@ -601,6 +601,8 @@ export default function Home() {
           )}
         </section>
 
+      </main>
+
       {/* Reading Modal */}
       {readingDiary && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
@@ -608,7 +610,7 @@ export default function Home() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => setReadingDiary(null)}
           />
-          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-zinc-900/95 border border-white/10 rounded-3xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
+          <div className="relative w-full max-w-3xl h-[80vh] overflow-y-auto bg-zinc-900/95 border border-white/10 rounded-3xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
             
             {/* Modal Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/5 bg-zinc-900/95 backdrop-blur-xl">
@@ -671,8 +673,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
-      </main>
     </div>
   );
 }
