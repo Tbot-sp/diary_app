@@ -20,6 +20,11 @@ type DiaryItem = {
   _creationTime: number;
 };
 
+type TagItem = {
+  _id: Id<"tags">;
+  name: string;
+};
+
 export default function Home() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
@@ -83,6 +88,7 @@ export default function Home() {
   // Convex hooks
   // Only run query if userId is present to avoid errors or empty queries
   const diaries = useQuery(api.diaries.list2, userId ? { userId, tag: filterTag ?? undefined } : "skip");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allTags = useQuery((api as any).tags.list, userId ? { userId } : "skip");
   const saveDiary = useMutation(api.diaries.save);
   const updateDiary = useMutation(api.diaries.update);
@@ -397,7 +403,7 @@ export default function Home() {
                       {allTags && allTags.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2 px-1">
                             <span className="text-xs text-zinc-600 self-center font-medium">常用標籤:</span>
-                            {allTags.filter((t: any) => !tags.includes(t.name)).slice(0, 5).map((t: any) => (
+                            {allTags.filter((t: TagItem) => !tags.includes(t.name)).slice(0, 5).map((t: TagItem) => (
                                 <button
                                     key={t._id}
                                     type="button"
@@ -494,8 +500,8 @@ export default function Home() {
                                   </button>
                                   
                                   {allTags
-                                      ?.filter((t: any) => t.name.toLowerCase().includes(tagSearchQuery.toLowerCase()))
-                                      .map((t: any) => (
+                                      ?.filter((t: TagItem) => t.name.toLowerCase().includes(tagSearchQuery.toLowerCase()))
+                                      .map((t: TagItem) => (
                                       <button
                                           key={t._id}
                                           onClick={() => { setFilterTag(t.name); setIsTagFilterOpen(false); }}
