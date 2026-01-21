@@ -271,7 +271,7 @@ export default function Home() {
         </div>
       </nav>
 
-      <main className="max-w-5xl mx-auto px-6 py-10 space-y-12 relative z-10">
+      <main className="max-w-5xl mx-auto px-6 py-10 space-y-12 relative">
         
         {/* Top Section: Collapsible Input Form */}
         <section className="w-full">
