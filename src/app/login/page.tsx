@@ -15,7 +15,7 @@ export default function LoginPage() {
   // 还需要有一个人来具体帮忙改值，所以需要setAccount
   //const [account, setAccount] = useState("")
 
-  const [account, setAccount] = useState("1"); //用来定义会随着用户操作而改变的变量，並且當這些變量改變時，React 會自動 重新渲染 頁面。
+  const [account, setAccount] = useState(""); //用来定义会随着用户操作而改变的变量，並且當這些變量改變時，React 會自動 重新渲染 頁面。
   const [password, setPassword] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
