@@ -467,7 +467,7 @@ export default function Home() {
                           <div className="fixed inset-0 z-40" onClick={() => setIsTagFilterOpen(false)} />
                           
                           {/* Dropdown Panel */}
-                          <div className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-3rem)] bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
+                          <div className="absolute right-0 top-full mt-2 w-72 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
                               <div className="relative mb-3">
                                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                   <input
@@ -608,10 +608,10 @@ export default function Home() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => setReadingDiary(null)}
           />
-          <div className="relative w-full max-w-3xl h-[80vh] bg-zinc-900/95 border border-white/10 rounded-3xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-zinc-900/95 border border-white/10 rounded-3xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
             
             {/* Modal Header */}
-            <div className="flex-none flex items-center justify-between p-6 border-b border-white/5 bg-zinc-900/95 backdrop-blur-xl rounded-t-3xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/5 bg-zinc-900/95 backdrop-blur-xl">
                {/* Date & Mood */}
                <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2 text-sm font-bold text-zinc-500 uppercase tracking-widest">
@@ -630,14 +630,14 @@ export default function Home() {
                         setReadingDiary(null);
                         handleEdit(readingDiary);
                     }}
-                    className="p-3 hover:bg-white/5 rounded-full text-zinc-400 hover:text-indigo-400 transition-colors"
+                    className="p-2 hover:bg-white/5 rounded-full text-zinc-400 hover:text-indigo-400 transition-colors"
                     title="編輯"
                   >
                     <Edit3 className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={() => setReadingDiary(null)}
-                    className="p-3 hover:bg-white/5 rounded-full text-zinc-400 hover:text-white transition-colors"
+                    className="p-2 hover:bg-white/5 rounded-full text-zinc-400 hover:text-white transition-colors"
                   >
                     <X className="w-6 h-6" />
                   </button>
@@ -645,7 +645,7 @@ export default function Home() {
             </div>
 
             {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+            <div className="p-8 space-y-6">
                <h2 className="text-3xl font-bold text-white leading-tight">
                  {decrypt(readingDiary.title)}
                </h2>
