@@ -33,6 +33,7 @@ export default function Home() {
   const [editingId, setEditingId] = useState<Id<"diaries"> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [readingDiary, setReadingDiary] = useState<DiaryItem | null>(null);
   
   // Filter state
   const [filterTag, setFilterTag] = useState<string | null>(null);
@@ -527,7 +528,8 @@ export default function Home() {
               {diaries.map((diary) => (
                 <div 
                   key={diary._id} 
-                  className={`group bg-white/[0.03] hover:bg-white/[0.05] border rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden ${
+                  onClick={() => setReadingDiary(diary)}
+                  className={`group bg-white/[0.03] hover:bg-white/[0.05] border rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden cursor-pointer ${
                     editingId === diary._id ? "border-indigo-500 ring-4 ring-indigo-500/10" : "border-white/10"
                   }`}
                 >
@@ -554,14 +556,20 @@ export default function Home() {
                     </div>
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
                       <button 
-                        onClick={() => handleEdit(diary)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(diary);
+                        }}
                         className="p-2.5 bg-white/5 hover:bg-indigo-500/20 rounded-xl text-zinc-400 hover:text-indigo-400 transition-all border border-white/5"
                         title="編輯"
                       >
                         <Edit3 className="w-5 h-5" />
                       </button>
                       <button 
-                        onClick={() => handleDelete(diary._id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(diary._id);
+                        }}
                         className="p-2.5 bg-white/5 hover:bg-red-500/20 rounded-xl text-zinc-400 hover:text-red-400 transition-all border border-white/5"
                         title="刪除"
                       >
@@ -569,7 +577,7 @@ export default function Home() {
                       </button>
                     </div>
                   </div>
-                  <p className="text-zinc-400 leading-relaxed whitespace-pre-wrap relative z-10 line-clamp-6 group-hover:line-clamp-none transition-all">
+                  <p className="text-zinc-400 leading-relaxed whitespace-pre-wrap relative z-10 line-clamp-6 transition-all">
                     {decrypt(diary.content)}
                   </p>
                   
@@ -580,6 +588,77 @@ export default function Home() {
             </div>
           )}
         </section>
+
+      {/* Reading Modal */}
+      {readingDiary && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setReadingDiary(null)}
+          />
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-zinc-900/95 border border-white/10 rounded-3xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
+            
+            {/* Modal Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/5 bg-zinc-900/95 backdrop-blur-xl">
+               {/* Date & Mood */}
+               <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 text-sm font-bold text-zinc-500 uppercase tracking-widest">
+                    <Calendar className="w-4 h-4" />
+                    {new Date(readingDiary._creationTime).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </div>
+                  {decryptMood(readingDiary.mood) && (
+                    <span className="text-2xl" title="當時的心情">{decryptMood(readingDiary.mood)}</span>
+                  )}
+               </div>
+               
+               {/* Actions */}
+               <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => {
+                        setReadingDiary(null);
+                        handleEdit(readingDiary);
+                    }}
+                    className="p-2 hover:bg-white/5 rounded-full text-zinc-400 hover:text-indigo-400 transition-colors"
+                    title="編輯"
+                  >
+                    <Edit3 className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => setReadingDiary(null)}
+                    className="p-2 hover:bg-white/5 rounded-full text-zinc-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+               </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-8 space-y-6">
+               <h2 className="text-3xl font-bold text-white leading-tight">
+                 {decrypt(readingDiary.title)}
+               </h2>
+               
+               {readingDiary.tags && readingDiary.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {readingDiary.tags.map(tag => (
+                      <span key={tag} className="text-xs px-2.5 py-1 bg-indigo-500/10 text-indigo-300 rounded-md border border-indigo-500/20 flex items-center gap-1">
+                        <Tag className="w-3 h-3" />
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+               )}
+
+               <div className="prose prose-invert max-w-none">
+                 <p className="text-zinc-300 text-lg leading-loose whitespace-pre-wrap">
+                   {decrypt(readingDiary.content)}
+                 </p>
+               </div>
+            </div>
+            
+          </div>
+        </div>
+      )}
 
       </main>
     </div>
