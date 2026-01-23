@@ -463,7 +463,7 @@ export default function Home() {
 
         {/* Bottom Section: Diary List */}
         <section className="space-y-8">
-          <div className="flex items-center justify-between border-b border-white/5 pb-4 flex-wrap gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/5 pb-4 gap-4">
             <h2 className="text-2xl font-bold flex items-center gap-3">
               <div className="p-2 bg-indigo-500/10 rounded-xl">
                 <Book className="w-6 h-6 text-indigo-400" />
@@ -471,7 +471,7 @@ export default function Home() {
               過往回憶
             </h2>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start gap-4">
               <div className="text-sm text-zinc-500 font-medium whitespace-nowrap">
                 共計 <span className="text-indigo-400">{diaries?.length || 0}</span> 篇日記
               </div>
@@ -497,7 +497,7 @@ export default function Home() {
                           <div className="fixed inset-0 z-40" onClick={() => setIsTagFilterOpen(false)} />
                           
                           {/* Dropdown Panel */}
-                          <div className="absolute right-0 top-full mt-2 w-72 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
+                          <div className="absolute right-0 top-full mt-2 w-64 sm:w-72 max-w-[calc(100vw-2rem)] bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
                               <div className="relative mb-3">
                                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                   <input
