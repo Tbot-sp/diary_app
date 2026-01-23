@@ -441,14 +441,19 @@ export default function Home() {
         {/* Heatmap Section */}
         {diaries && (
             <section className="w-full animate-fade-in">
-                 <div className="bg-black/20 backdrop-blur-md border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden group hover:border-white/10 transition-colors">
-                    <h3 className="text-lg font-bold text-zinc-400 mb-6 flex items-center gap-2 tracking-wide">
+                 <div className="bg-white/[0.03] hover:bg-white/[0.05] border border-white/10 rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden group">
+                    <h3 className="text-lg font-bold text-zinc-400 mb-6 flex items-center gap-2 tracking-wide relative z-10">
                         <div className="p-1.5 bg-indigo-500/10 rounded-lg">
                             <Calendar className="w-4 h-4 text-indigo-400" />
                         </div>
                         記錄足跡
                     </h3>
-                    <DiaryHeatmap diaries={diaries} />
+                    <div className="relative z-10">
+                        <DiaryHeatmap diaries={diaries} />
+                    </div>
+                    
+                    {/* Subtle card glow on hover */}
+                    <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-indigo-500/5 blur-[60px] rounded-full pointer-events-none group-hover:bg-indigo-500/10 transition-all duration-700" />
                  </div>
             </section>
         )}
