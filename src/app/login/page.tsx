@@ -1,60 +1,107 @@
 "use client";
 
-// 为什么要引入这些包呢
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
-import { Lock, User, Sparkles, Loader2, ArrowRight } from "lucide-react";
+import { User, Sparkles, ArrowRight, Key } from "lucide-react";
+import * as THREE from "three";
+
+type VantaEffect = { destroy: () => void };
+type VantaFactory = (options: Record<string, unknown>) => VantaEffect;
 
 export default function LoginPage() {
-
-  // 登陆页面，需要提供account输入
-  //const [account, ]   
-  // 这个值，要在用户修改的时候随时改变 --> 需要采用React中的useState("")
-  // 还需要有一个人来具体帮忙改值，所以需要setAccount
-  //const [account, setAccount] = useState("")
-
-  const [account, setAccount] = useState(""); //用来定义会随着用户操作而改变的变量，並且當這些變量改變時，React 會自動 重新渲染 頁面。
+  const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
-
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   
-  const router = useRouter(); //用来处理页面跳转？
+  // Vanta.js ref
+  const vantaRef = useRef<HTMLDivElement>(null);
+  const vantaEffectRef = useRef<VantaEffect | null>(null);
+
+  const router = useRouter();
   
-  // Use Convex mutations/queries
   const createUser = useMutation(api.users.user_creation);
   const allUsers = useQuery(api.users.users);
 
+  // Initialize Vanta.js effect
+  useEffect(() => {
+    let cancelled = false;
 
-  
-  // e就是event，捕獲React.FormEvent
+    const initVanta = async () => {
+      if (!vantaEffectRef.current && vantaRef.current) {
+        const w = window as unknown as { THREE: typeof THREE };
+        w.THREE = THREE;
+
+        try {
+          // @ts-expect-error: Vanta.js lacks types
+          const birdsModule: unknown = await import("vanta/dist/vanta.birds.min");
+          const maybeDefault = (birdsModule as { default?: unknown }).default;
+          const factoryUnknown = typeof maybeDefault === "function" ? maybeDefault : birdsModule;
+          if (typeof factoryUnknown !== "function") return;
+
+          const BIRDS = factoryUnknown as VantaFactory;
+          const effect = BIRDS({
+            el: vantaRef.current,
+            THREE: THREE,
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            backgroundColor: 0x050f20, // 深藍色背景
+            color1: 0xff0000,         // 紅色
+            color2: 0x00d1ff,         // 青色
+            birdSize: 1.0,
+            wingSpan: 30.0,
+            speedLimit: 5.0,
+            separation: 20.0,
+            alignment: 20.0,
+            cohesion: 20.0,
+            quantity: 5.0
+          } satisfies Record<string, unknown>);
+
+          if (!cancelled) vantaEffectRef.current = effect;
+        } catch (err) {
+          console.error("Vanta initialization failed:", err);
+        }
+      }
+    };
+
+    initVanta();
+
+    return () => {
+      if (vantaEffectRef.current) {
+        vantaEffectRef.current.destroy();
+        vantaEffectRef.current = null;
+      }
+      cancelled = true;
+    };
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); 
     setIsLoading(true);
     setError("");
 
-    try { //处理登陆逻辑
-      // Simple client-side auth logic (for learning purpose)
-      // In production, this should be done securely on the server/auth provider
+    try {
       const existingUser = allUsers?.find(u => u.account === account);
 
       if (existingUser) {
-        // Login attempt
         if (existingUser.password === password) {
-          // Success
           localStorage.setItem("diary_user", account);
-          localStorage.setItem("diary_key", password); // Use password as encryption key
+          localStorage.setItem("diary_key", password);
           router.push("/");
         } else {
           setError("密碼錯誤，請重新輸入");
         }
       } else {
-        // Auto-register if user doesn't exist
         await createUser({ account, password });
         localStorage.setItem("diary_user", account);
-        localStorage.setItem("diary_key", password); // Use password as encryption key
+        localStorage.setItem("diary_key", password);
         router.push("/");
       }
     } catch (err) {
@@ -66,80 +113,75 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 relative overflow-hidden">
-      {/* Dynamic Background Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/20 blur-[120px] rounded-full animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/20 blur-[120px] rounded-full animate-pulse delay-700" />
-      
+    <div ref={vantaRef} className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      <div className="absolute inset-0 bg-slate-950/35 pointer-events-none" />
+
       <main className="relative z-10 w-full max-w-md p-6">
-        <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 p-10 rounded-[2.5rem] shadow-2xl">
+        <div className="bg-white/10 backdrop-blur-xl border border-white/15 p-10 rounded-[2rem] shadow-2xl shadow-black/30 transition-all duration-500 hover:bg-white/12 hover:border-white/25">
           
           <header className="text-center mb-10">
-            <div className="inline-flex p-3 rounded-2xl bg-indigo-500/10 mb-4 ring-1 ring-indigo-500/20">
-              <Sparkles className="w-8 h-8 text-indigo-400" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-6 ring-1 ring-white/20 shadow-[0_0_24px_rgba(0,209,255,0.18)]">
+              <Sparkles className="w-8 h-8 text-cyan-200" />
             </div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">歡迎回來</h1>
-            <p className="text-zinc-500 mt-2 text-sm">請輸入您的憑據以進入私密空間</p>
+            <h1 className="text-4xl font-light text-white/90 tracking-tight mb-2 font-serif">Diary</h1>
+            <p className="text-white/60 text-sm tracking-wide">記錄您生活中的每一個瞬間</p>
           </header>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-xs font-medium text-zinc-400 ml-1 uppercase tracking-widest">帳號</label>
+              <label className="text-xs font-medium text-white/55 ml-1 uppercase tracking-widest">Account</label>
               <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-indigo-400 transition-colors" />
+                <User className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/75 drop-shadow-sm group-focus-within:text-cyan-100 transition-colors" />
                 <input
                   type="text"
                   required
                   value={account}
                   onChange={(e) => setAccount(e.target.value)}
-                  placeholder="Your account"
-                  className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                  placeholder="輸入您的帳號"
+                  className="w-full bg-white/15 border border-white/20 rounded-xl py-4 pl-12 pr-4 text-white/90 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-cyan-300/35 focus:border-cyan-200/50 focus:bg-white/20 transition-all duration-300"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-medium text-zinc-400 ml-1 uppercase tracking-widest">密碼</label>
+              <label className="text-xs font-medium text-white/55 ml-1 uppercase tracking-widest">Password</label>
               <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-indigo-400 transition-colors" />
+                <Key className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/75 drop-shadow-sm group-focus-within:text-cyan-100 transition-colors" />
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                  placeholder="輸入您的密碼"
+                  className="w-full bg-white/15 border border-white/20 rounded-xl py-4 pl-12 pr-4 text-white/90 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-cyan-300/35 focus:border-cyan-200/50 focus:bg-white/20 transition-all duration-300"
                 />
               </div>
             </div>
 
             {error && (
-              <p className="text-red-400 text-xs text-center bg-red-500/10 py-2 rounded-lg border border-red-500/20">
+              <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm text-center animate-pulse">
                 {error}
-              </p>
+              </div>
             )}
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full group bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 mt-4"
+              className="group relative w-full bg-white/12 text-white font-medium py-4 rounded-xl shadow-lg shadow-black/25 hover:bg-white/16 hover:shadow-black/40 active:scale-[0.98] transition-all duration-300 overflow-hidden border border-white/10 hover:border-white/20"
             >
-              {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  進入日記本
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                {isLoading ? "處理中..." : "進入空間"}
+                {!isLoading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/25 via-fuchsia-500/20 to-cyan-500/25 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </button>
           </form>
 
-          <footer className="mt-8 text-center">
-            <p className="text-zinc-600 text-xs">
-              首次登錄將自動為您創建帳號
+          <div className="mt-8 text-center">
+            <p className="text-xs text-white/45">
+              首次登錄將自動創建帳號 • 端對端加密保護
             </p>
-          </footer>
+          </div>
         </div>
       </main>
     </div>

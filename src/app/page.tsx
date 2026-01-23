@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { LogOut, Plus, Book, Calendar, Trash2, Edit3, X, ChevronDown, Tag, Filter, Search } from "lucide-react";
 import AES from 'crypto-js/aes';
 import encUtf8 from 'crypto-js/enc-utf8';
+import DiaryHeatmap from "../components/DiaryHeatmap";
 
 const MOODS = ["🌞", "☁️", "🌧️", "⚡", "❄️", "🌈", "🔥", "💤"];
 
@@ -436,6 +437,24 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Heatmap Section */}
+        {diaries && (
+            <section className="w-full animate-fade-in">
+                 <div className="bg-black/20 backdrop-blur-md border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden group hover:border-white/10 transition-colors">
+                    <h3 className="text-lg font-bold text-zinc-400 mb-6 flex items-center gap-2 tracking-wide">
+                        <div className="p-1.5 bg-indigo-500/10 rounded-lg">
+                            <Calendar className="w-4 h-4 text-indigo-400" />
+                        </div>
+                        記錄足跡
+                    </h3>
+                    <DiaryHeatmap diaries={diaries} />
+                 </div>
+            </section>
+        )}
+
+
+
 
         {/* Bottom Section: Diary List */}
         <section className="space-y-8">
