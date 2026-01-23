@@ -12,6 +12,8 @@ export default defineSchema({
   users: defineTable({
     account: v.string(),
     password: v.string(),
+    isPro: v.optional(v.boolean()),
+    subscriptionEndTime: v.optional(v.number()),
   }),
   tags: defineTable({
     name: v.string(),
