@@ -5,9 +5,10 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
-import { LogOut, Plus, Book, Calendar, Trash2, Edit3, X, ChevronDown, Tag, Filter, Search } from "lucide-react";
+import { LogOut, Plus, Book, Calendar, Trash2, Edit3, X, ChevronDown, Tag, Filter, Search, Moon, Sun } from "lucide-react";
 import AES from 'crypto-js/aes';
 import encUtf8 from 'crypto-js/enc-utf8';
+import { useTheme } from "next-themes";
 
 const MOODS = ["🌞", "☁️", "🌧️", "⚡", "❄️", "🌈", "🔥", "💤"];
 
@@ -27,6 +28,8 @@ type TagItem = {
 
 export default function Home() {
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   
   // State for new/editing diary entry
@@ -61,6 +64,7 @@ export default function Home() {
 
   // Generate stars on client side to avoid hydration mismatch
   useEffect(() => {
+    setMounted(true);
     const generateStars = () => {
       return Array.from({ length: 100 }).map((_, i) => ({
         id: i,
@@ -93,7 +97,7 @@ export default function Home() {
   const saveDiary = useMutation(api.diaries.save);
   const updateDiary = useMutation(api.diaries.update);
   const removeDiary = useMutation(api.diaries.remove);
-
+  
   const handleLogout = () => {
     localStorage.removeItem("diary_user");
     router.push("/login");
@@ -226,49 +230,58 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white selection:bg-indigo-500/30 relative overflow-hidden">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white selection:bg-indigo-500/30 relative overflow-hidden transition-colors duration-500">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 blur-[120px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse delay-1000" />
         <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-blue-600/5 blur-[100px] rounded-full animate-bounce duration-[10000ms] opacity-50" />
         
-        {/* Starry Sky */}
-        {stars.map((star) => (
-          <div
-            key={star.id}
-            className="absolute bg-white rounded-full animate-pulse"
-            style={{
-              top: star.top,
-              left: star.left,
-              width: star.size,
-              height: star.size,
-              opacity: star.opacity,
-              animationDuration: star.duration,
-              animationDelay: star.delay,
-              boxShadow: `0 0 ${parseInt(star.size) * 2}px rgba(255, 255, 255, 0.8)`
-            }}
-          />
-        ))}
+        {/* Starry Sky - Only show in dark mode or reduce opacity in light mode */}
+        <div className="dark:opacity-100 opacity-0 transition-opacity duration-500">
+          {stars.map((star) => (
+            <div
+              key={star.id}
+              className="absolute bg-white rounded-full animate-pulse"
+              style={{
+                top: star.top,
+                left: star.left,
+                width: star.size,
+                height: star.size,
+                opacity: star.opacity,
+                animationDuration: star.duration,
+                animationDelay: star.delay,
+                boxShadow: `0 0 ${parseInt(star.size) * 2}px rgba(255, 255, 255, 0.8)`
+              }}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Navbar */}
-      <nav className="border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0 z-50">
+      <nav className="border-b border-black/5 dark:border-white/10 bg-white/70 dark:bg-black/40 backdrop-blur-xl sticky top-0 z-50 transition-colors duration-500">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-indigo-500/10 rounded-lg">
-              <Book className="w-5 h-5 text-indigo-400" />
+              <Book className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
             </div>
             <span className="font-bold text-lg tracking-tight">我的日記本</span>
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="text-sm text-zinc-400">
-              嗨，<span className="text-white font-medium">{userId}</span>
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+              title={theme === "dark" ? "切換到日間模式" : "切換到夜間模式"}
+            >
+              {mounted && (theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />)}
+            </button>
+            <div className="text-sm text-zinc-500 dark:text-zinc-400">
+              嗨，<span className="text-zinc-900 dark:text-white font-medium">{userId}</span>
             </div>
             <button 
               onClick={handleLogout}
-              className="p-2 hover:bg-white/5 rounded-lg transition-colors text-zinc-400 hover:text-white"
+              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
               title="登出"
             >
               <LogOut className="w-5 h-5" />
@@ -281,7 +294,7 @@ export default function Home() {
         
         {/* Top Section: Collapsible Input Form */}
         <section className="w-full">
-          <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+          <div className="bg-white/80 dark:bg-white/[0.03] border border-black/5 dark:border-white/10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group transition-colors duration-500">
             {/* Subtle background glow for the form */}
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-indigo-500/20 transition-all duration-700" />
             
@@ -290,8 +303,8 @@ export default function Home() {
               onClick={() => setIsExpanded(!isExpanded)}
               className="p-8 flex items-center justify-between relative z-10 cursor-pointer select-none"
             >
-              <h2 className="text-2xl font-bold flex items-center gap-3">
-                <div className={`p-2.5 rounded-2xl ${editingId ? 'bg-purple-500/10 text-purple-400' : 'bg-indigo-500/10 text-indigo-400'}`}>
+              <h2 className="text-2xl font-bold flex items-center gap-3 text-zinc-800 dark:text-white">
+                <div className={`p-2.5 rounded-2xl ${editingId ? 'bg-purple-500/10 text-purple-500 dark:text-purple-400' : 'bg-indigo-500/10 text-indigo-500 dark:text-indigo-400'}`}>
                   {editingId ? <Edit3 className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
                 </div>
                 {editingId ? "修改這篇精彩的回憶" : "今天有什麼值得記錄的？"}
@@ -304,15 +317,15 @@ export default function Home() {
                       e.stopPropagation();
                       resetForm();
                     }}
-                    className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 rounded-xl text-zinc-400 hover:text-white transition-all text-sm font-medium border border-transparent hover:border-white/10"
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all text-sm font-medium border border-transparent hover:border-black/5 dark:hover:border-white/10"
                   >
                     <X className="w-4 h-4" />
                     取消編輯
                   </button>
                 )}
                 
-                <div className={`p-2 rounded-full bg-white/5 transition-transform duration-500 ${isExpanded ? 'rotate-180' : ''}`}>
-                  <ChevronDown className="w-6 h-6 text-zinc-400" />
+                <div className={`p-2 rounded-full bg-black/5 dark:bg-white/5 transition-transform duration-500 ${isExpanded ? 'rotate-180' : ''}`}>
+                  <ChevronDown className="w-6 h-6 text-zinc-500 dark:text-zinc-400" />
                 </div>
               </div>
             </div>
@@ -334,7 +347,7 @@ export default function Home() {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="給這段回憶起個名字..."
-                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-xl font-medium text-white placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all shadow-inner"
+                        className="w-full bg-black/5 dark:bg-white/[0.03] border border-black/5 dark:border-white/10 rounded-2xl py-4 px-6 text-xl font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all shadow-inner"
                       />
                     </div>
                     
@@ -346,7 +359,7 @@ export default function Home() {
                         onChange={(e) => setContent(e.target.value)}
                         placeholder="在這裡盡情傾訴..."
                         rows={8}
-                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-lg leading-relaxed text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all resize-none shadow-inner"
+                        className="w-full bg-black/5 dark:bg-white/[0.03] border border-black/5 dark:border-white/10 rounded-2xl py-4 px-6 text-lg leading-relaxed text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all resize-none shadow-inner"
                       />
                     </div>
 
@@ -361,7 +374,7 @@ export default function Home() {
                             className={`text-2xl p-4 rounded-2xl transition-all border ${
                               mood === m 
                                 ? "bg-indigo-500/20 border-indigo-500/50 scale-110 shadow-lg shadow-indigo-500/20" 
-                                : "bg-white/[0.03] border-white/10 hover:bg-white/[0.08] hover:scale-105"
+                                : "bg-black/5 dark:bg-white/[0.03] border-black/5 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/[0.08] hover:scale-105"
                             }`}
                           >
                             {m}
@@ -372,11 +385,11 @@ export default function Home() {
 
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] ml-1">標籤 (最多3個)</label>
-                      <div className="flex flex-wrap gap-2 mb-2 p-3 bg-white/[0.03] border border-white/10 rounded-2xl">
+                      <div className="flex flex-wrap gap-2 mb-2 p-3 bg-black/5 dark:bg-white/[0.03] border border-black/5 dark:border-white/10 rounded-2xl">
                         {tags.map(tag => (
-                          <span key={tag} className="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-sm flex items-center gap-1 border border-indigo-500/30">
+                          <span key={tag} className="px-3 py-1 bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 rounded-full text-sm flex items-center gap-1 border border-indigo-500/20 dark:border-indigo-500/30">
                             {tag}
-                            <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-white transition-colors"><X className="w-3 h-3" /></button>
+                            <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-zinc-900 dark:hover:text-white transition-colors"><X className="w-3 h-3" /></button>
                           </span>
                         ))}
                         <div className="relative flex items-center flex-1 min-w-[120px]">
@@ -387,13 +400,13 @@ export default function Home() {
                               onKeyDown={handleAddTag}
                               placeholder={tags.length >= 3 ? "標籤已滿" : "輸入標籤按 Enter 添加..."}
                               disabled={tags.length >= 3}
-                              className="bg-transparent py-1 px-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none w-full"
+                              className="bg-transparent py-1 px-2 text-sm text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-500 dark:placeholder:text-zinc-600 focus:outline-none w-full"
                             />
                              <button 
                                 type="button" 
                                 onClick={handleAddTag} 
                                 disabled={!tagInput.trim() || tags.length >= 3} 
-                                className="ml-2 p-1 bg-white/5 hover:bg-indigo-500 rounded-lg text-zinc-500 hover:text-white disabled:opacity-50 transition-all"
+                                className="ml-2 p-1 bg-black/5 dark:bg-white/5 hover:bg-indigo-500 rounded-lg text-zinc-500 hover:text-white disabled:opacity-50 transition-all"
                              >
                                 <Plus className="w-4 h-4" />
                              </button>
@@ -408,7 +421,7 @@ export default function Home() {
                                     key={t._id}
                                     type="button"
                                     onClick={() => handleSelectTag(t.name)}
-                                    className="text-xs px-2.5 py-1 bg-white/5 hover:bg-indigo-500/20 border border-white/5 hover:border-indigo-500/30 rounded-lg text-zinc-400 hover:text-indigo-300 transition-all"
+                                    className="text-xs px-2.5 py-1 bg-black/5 dark:bg-white/5 hover:bg-indigo-500/10 dark:hover:bg-indigo-500/20 border border-black/5 dark:border-white/5 hover:border-indigo-500/30 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-300 transition-all"
                                 >
                                     {t.name}
                                 </button>
@@ -459,7 +472,7 @@ export default function Home() {
                       className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
                           filterTag 
                           ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" 
-                          : "bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10 hover:text-white"
+                          : "bg-black/5 dark:bg-white/5 text-zinc-500 dark:text-zinc-400 border-black/5 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 hover:text-zinc-900 dark:hover:text-white"
                       }`}
                   >
                       <Filter className="w-4 h-4" />
@@ -473,7 +486,7 @@ export default function Home() {
                           <div className="fixed inset-0 z-40" onClick={() => setIsTagFilterOpen(false)} />
                           
                           {/* Dropdown Panel */}
-                          <div className="absolute right-0 top-full mt-2 w-72 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
+                          <div className="absolute right-0 top-full mt-2 w-72 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
                               <div className="relative mb-3">
                                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                   <input
@@ -482,7 +495,7 @@ export default function Home() {
                                       value={tagSearchQuery}
                                       onChange={(e) => setTagSearchQuery(e.target.value)}
                                       autoFocus
-                                      className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
+                                      className="w-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-xl py-2 pl-9 pr-4 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
                                   />
                               </div>
 
@@ -491,8 +504,8 @@ export default function Home() {
                                       onClick={() => { setFilterTag(null); setIsTagFilterOpen(false); }}
                                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2 ${
                                           filterTag === null
-                                              ? "bg-indigo-500/20 text-indigo-300"
-                                              : "hover:bg-white/5 text-zinc-400 hover:text-white"
+                                              ? "bg-indigo-500/20 text-indigo-600 dark:text-indigo-300"
+                                              : "hover:bg-black/5 dark:hover:bg-white/5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                                       }`}
                                   >
                                       <span className="w-2 h-2 rounded-full bg-current opacity-50" />
@@ -507,17 +520,17 @@ export default function Home() {
                                           onClick={() => { setFilterTag(t.name); setIsTagFilterOpen(false); }}
                                           className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2 group ${
                                               filterTag === t.name
-                                                  ? "bg-indigo-500/20 text-indigo-300"
-                                                  : "hover:bg-white/5 text-zinc-400 hover:text-white"
+                                                  ? "bg-indigo-500/20 text-indigo-600 dark:text-indigo-300"
+                                                  : "hover:bg-black/5 dark:hover:bg-white/5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                                           }`}
                                       >
-                                          <Tag className={`w-3.5 h-3.5 ${filterTag === t.name ? "text-indigo-400" : "text-zinc-600 group-hover:text-zinc-400"}`} />
+                                          <Tag className={`w-3.5 h-3.5 ${filterTag === t.name ? "text-indigo-500 dark:text-indigo-400" : "text-zinc-500 dark:text-zinc-600 group-hover:text-zinc-400"}`} />
                                           {t.name}
                                       </button>
                                   ))}
                                   
                                   {allTags && allTags.length === 0 && (
-                                      <div className="text-center py-4 text-xs text-zinc-600">
+                                      <div className="text-center py-4 text-xs text-zinc-500">
                                           暫無標籤
                                       </div>
                                   )}
@@ -535,9 +548,9 @@ export default function Home() {
               <p className="text-zinc-500 font-medium animate-pulse">正在開啟時光機...</p>
             </div>
           ) : diaries.length === 0 ? (
-            <div className="bg-white/[0.02] border border-dashed border-white/10 rounded-[2.5rem] p-20 text-center group">
-              <div className="inline-flex p-6 rounded-3xl bg-zinc-900 mb-6 group-hover:scale-110 transition-transform duration-500">
-                <Book className="w-12 h-12 text-zinc-700" />
+            <div className="bg-black/5 dark:bg-white/[0.02] border border-dashed border-black/5 dark:border-white/10 rounded-[2.5rem] p-20 text-center group">
+              <div className="inline-flex p-6 rounded-3xl bg-white dark:bg-zinc-900 mb-6 group-hover:scale-110 transition-transform duration-500">
+                <Book className="w-12 h-12 text-zinc-400 dark:text-zinc-700" />
               </div>
               <p className="text-zinc-500 text-lg font-medium">這裏空空如也，快來寫下第一篇日記吧！</p>
             </div>
@@ -547,20 +560,20 @@ export default function Home() {
                 <div 
                   key={diary._id} 
                   onClick={() => setReadingDiary(diary)}
-                  className={`group bg-white/[0.03] hover:bg-white/[0.05] border rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden cursor-pointer ${
-                    editingId === diary._id ? "border-indigo-500 ring-4 ring-indigo-500/10" : "border-white/10"
+                  className={`group bg-white dark:bg-white/[0.03] hover:bg-gray-50 dark:hover:bg-white/[0.05] border rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden cursor-pointer shadow-sm dark:shadow-none ${
+                    editingId === diary._id ? "border-indigo-500 ring-4 ring-indigo-500/10" : "border-black/5 dark:border-white/10"
                   }`}
                 >
                   <div className="flex justify-between items-start mb-6 relative z-10">
                     <div className="space-y-2">
-                        <h3 className="text-xl font-bold text-zinc-100 group-hover:text-indigo-300 transition-colors leading-tight flex items-center gap-2">
+                        <h3 className="text-xl font-bold text-zinc-800 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors leading-tight flex items-center gap-2">
                           <span>{decrypt(diary.title)}</span>
                           {decryptMood(diary.mood) && <span className="text-2xl" title="當時的心情">{decryptMood(diary.mood)}</span>}
                         </h3>
                         {diary.tags && diary.tags.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-2">
                             {diary.tags.map(tag => (
-                              <span key={tag} className="text-xs px-2 py-1 bg-indigo-500/10 text-indigo-300 rounded-md border border-indigo-500/20 flex items-center gap-1">
+                              <span key={tag} className="text-xs px-2 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 rounded-md border border-indigo-500/20 flex items-center gap-1">
                                 <Tag className="w-3 h-3" />
                                 {tag}
                               </span>
@@ -568,39 +581,32 @@ export default function Home() {
                           </div>
                         )}
                         <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-widest pt-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {new Date(diary._creationTime).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                      </div>
+                          <Calendar className="w-3 h-3" />
+                          {new Date(diary._creationTime).toLocaleDateString()}
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEdit(diary);
-                        }}
-                        className="p-2.5 bg-white/5 hover:bg-indigo-500/20 rounded-xl text-zinc-400 hover:text-indigo-400 transition-all border border-white/5"
+                    
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleEdit(diary); }}
+                        className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-all"
                         title="編輯"
                       >
-                        <Edit3 className="w-5 h-5" />
+                        <Edit3 className="w-4 h-4" />
                       </button>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(diary._id);
-                        }}
-                        className="p-2.5 bg-white/5 hover:bg-red-500/20 rounded-xl text-zinc-400 hover:text-red-400 transition-all border border-white/5"
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(diary._id); }}
+                        className="p-2 hover:bg-red-500/10 rounded-xl text-zinc-500 hover:text-red-500 transition-all"
                         title="刪除"
                       >
-                        <Trash2 className="w-5 h-5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
-                  <p className="text-zinc-400 leading-relaxed whitespace-pre-wrap relative z-10 line-clamp-6 transition-all">
+                  
+                  <p className="text-zinc-600 dark:text-zinc-400 line-clamp-3 leading-relaxed relative z-10">
                     {decrypt(diary.content)}
                   </p>
-                  
-                  {/* Subtle card glow on hover */}
-                  <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-indigo-500/5 blur-[60px] rounded-full pointer-events-none group-hover:bg-indigo-500/10 transition-all duration-700" />
                 </div>
               ))}
             </div>
@@ -616,10 +622,10 @@ export default function Home() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => setReadingDiary(null)}
           />
-          <div className="relative w-full max-w-3xl h-[80vh] overflow-y-auto bg-zinc-900/95 border border-white/10 rounded-3xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
+          <div className="relative w-full max-w-3xl h-[80vh] overflow-y-auto bg-white/95 dark:bg-zinc-900/95 border border-black/5 dark:border-white/10 rounded-3xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
             
             {/* Modal Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/5 bg-zinc-900/95 backdrop-blur-xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-black/5 dark:border-white/5 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl">
                {/* Date & Mood */}
                <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2 text-sm font-bold text-zinc-500 uppercase tracking-widest">
@@ -638,14 +644,14 @@ export default function Home() {
                         setReadingDiary(null);
                         handleEdit(readingDiary);
                     }}
-                    className="p-2 hover:bg-white/5 rounded-full text-zinc-400 hover:text-indigo-400 transition-colors"
+                    className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                     title="編輯"
                   >
                     <Edit3 className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={() => setReadingDiary(null)}
-                    className="p-2 hover:bg-white/5 rounded-full text-zinc-400 hover:text-white transition-colors"
+                    className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
                   >
                     <X className="w-6 h-6" />
                   </button>
@@ -654,14 +660,14 @@ export default function Home() {
 
             {/* Modal Content */}
             <div className="p-8 space-y-6">
-               <h2 className="text-3xl font-bold text-white leading-tight">
+               <h2 className="text-3xl font-bold text-zinc-900 dark:text-white leading-tight">
                  {decrypt(readingDiary.title)}
                </h2>
                
                {readingDiary.tags && readingDiary.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {readingDiary.tags.map(tag => (
-                      <span key={tag} className="text-xs px-2.5 py-1 bg-indigo-500/10 text-indigo-300 rounded-md border border-indigo-500/20 flex items-center gap-1">
+                      <span key={tag} className="text-xs px-2.5 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 rounded-md border border-indigo-500/20 flex items-center gap-1">
                         <Tag className="w-3 h-3" />
                         {tag}
                       </span>
@@ -669,8 +675,8 @@ export default function Home() {
                   </div>
                )}
 
-               <div className="prose prose-invert max-w-none">
-                 <p className="text-zinc-300 text-lg leading-loose whitespace-pre-wrap">
+               <div className="prose dark:prose-invert max-w-none">
+                 <p className="text-zinc-600 dark:text-zinc-300 text-lg leading-loose whitespace-pre-wrap">
                    {decrypt(readingDiary.content)}
                  </p>
                </div>
