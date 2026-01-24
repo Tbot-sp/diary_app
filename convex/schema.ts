@@ -19,5 +19,10 @@ export default defineSchema({
   })
   .index("by_user", ["userId"])
   .index("by_user_name", ["userId", "name"]),
+  analytics: defineTable({
+    eventType: v.string(),
+    userId: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+  }),
 });
 

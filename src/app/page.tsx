@@ -272,6 +272,7 @@ export default function Home() {
   const saveDiary = useMutation(api.diaries.save);
   const updateDiary = useMutation(api.diaries.update);
   const removeDiary = useMutation(api.diaries.remove);
+  const recordEvent = useMutation(api.analytics.recordEvent);
 
   const handleLogout = () => {
     localStorage.removeItem("diary_user");
@@ -552,7 +553,13 @@ export default function Home() {
             </button>
 
             <button
-              onClick={() => setIsUpgradeModalOpen(true)}
+              onClick={() => {
+                recordEvent({
+                  eventType: "click_pro_button",
+                  userId: userId || undefined,
+                });
+                setIsUpgradeModalOpen(true);
+              }}
               className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg text-amber-200 text-sm font-medium transition-all hover:scale-105"
             >
               <Crown className="w-4 h-4 text-amber-400" />
@@ -1067,6 +1074,11 @@ export default function Home() {
                   
                   <button
                     onClick={() => {
+                      recordEvent({
+                        eventType: "purchase_success",
+                        userId: userId || undefined,
+                        metadata: { amount: 3.99, currency: "CNY" },
+                      });
                       alert("敬請期待");
                       setIsUpgradeModalOpen(false);
                     }}
