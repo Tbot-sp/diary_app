@@ -126,7 +126,7 @@ export default function DiaryHeatmap({ diaries }: DiaryHeatmapProps) {
                     className={`w-full px-4 py-2 text-xs text-left transition-colors flex items-center justify-between ${
                       selectedYear === year 
                         ? 'bg-indigo-500/20 text-indigo-300' 
-                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
                     {year}
@@ -142,7 +142,7 @@ export default function DiaryHeatmap({ diaries }: DiaryHeatmapProps) {
       <div className="w-full overflow-x-auto pb-4 scrollbar-hide">
         <div className="min-w-max mx-auto w-fit">
         {/* Month Labels */}
-        <div className="flex mb-2 text-xs text-zinc-500 font-medium relative h-5">
+        <div className="flex mb-2 text-xs text-zinc-100 font-medium relative h-5">
             {months.map((month, i) => (
                 <div 
                     key={`${month.name}-${i}`} 
@@ -156,7 +156,7 @@ export default function DiaryHeatmap({ diaries }: DiaryHeatmapProps) {
 
         <div className="flex gap-1">
           {/* Day Labels (Mon, Wed, Fri) */}
-          <div className="flex flex-col gap-1 pr-2 text-[10px] text-zinc-600 font-medium pt-[14px] w-8 text-right">
+          <div className="flex flex-col gap-1 pr-2 text-[10px] text-zinc-300 font-medium pt-[14px] w-8 text-right">
             <div className="h-[10px]" /> {/* Sun */}
             <div className="h-[10px] leading-[10px]">一</div>
             <div className="h-[10px]" /> {/* Tue */}
@@ -187,7 +187,7 @@ export default function DiaryHeatmap({ diaries }: DiaryHeatmapProps) {
         </div>
 
         {/* Legend */}
-        <div className="mt-4 flex items-center justify-end gap-2 text-xs text-zinc-500">
+        <div className="mt-4 flex items-center justify-end gap-2 text-xs text-zinc-400">
           <span>少</span>
           <div className="w-[10px] h-[10px] rounded-sm bg-white/5 border border-transparent" />
           <div className="w-[10px] h-[10px] rounded-sm bg-indigo-900/60 border border-indigo-800/50" />
