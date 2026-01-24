@@ -14,12 +14,12 @@ export const themes: Record<string, Theme> = {
     // Glassmorphism (Glass Texture) for Clouds mode
     card: "bg-zinc-900/30 hover:bg-zinc-900/40 border-white/30 shadow-2xl backdrop-blur-xl transition-all duration-300 backdrop-saturate-150",
     cardStatic: "bg-zinc-900/30 border-white/30 shadow-2xl backdrop-blur-xl backdrop-saturate-150",
-    input: "bg-zinc-900/20 border-white/20 text-white placeholder:text-white/50 focus:bg-zinc-900/40 focus:border-white/40 backdrop-blur-lg",
-    tagContainer: "bg-zinc-900/20 border-white/20 backdrop-blur-lg",
+    input: "bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:bg-white/20 focus:border-white/40 backdrop-blur-lg",
+    tagContainer: "bg-white/10 border-white/20 backdrop-blur-lg",
     textMuted: "text-white/80",
     textDim: "text-white/60",
-    moodBtn: "bg-zinc-900/20 border-white/20 hover:bg-zinc-900/40 backdrop-blur-lg hover:border-white/40",
-    filterBtn: "bg-zinc-900/20 text-white/80 border-white/20 hover:bg-zinc-900/40 hover:text-white backdrop-blur-lg"
+    moodBtn: "bg-white/10 border-white/20 hover:bg-white/20 backdrop-blur-lg hover:border-white/40",
+    filterBtn: "bg-white/10 text-white/80 border-white/20 hover:bg-white/20 hover:text-white backdrop-blur-lg"
   },
   default: {
     card: "bg-white/[0.03] hover:bg-white/[0.05] border-white/10",
