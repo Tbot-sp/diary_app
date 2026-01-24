@@ -563,12 +563,13 @@ export default function Home() {
                 });
                 setIsUpgradeModalOpen(true);
               }}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg text-amber-200 text-sm font-medium transition-all hover:scale-105"
+              className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg text-amber-200 text-sm font-medium transition-all hover:scale-105"
             >
               <Crown className="w-4 h-4 text-amber-400" />
-              升級 Pro
+              <span className="sm:hidden">升級 Pro</span>
+              <span className="hidden sm:inline">升級 Pro</span>
             </button>
-            <div className="text-sm text-zinc-400">
+            <div className="hidden sm:block text-sm text-zinc-400">
               嗨，<span className="text-white font-medium">{userId}</span>
             </div>
             <button 
