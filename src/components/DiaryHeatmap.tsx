@@ -7,14 +7,21 @@ import {
 } from "date-fns";
 import { zhTW } from "date-fns/locale";
 import { ChevronDown } from "lucide-react";
+import { themes } from "../lib/theme";
 
 type DiaryHeatmapProps = {
   diaries: { _creationTime: number }[];
+  themeMode?: string;
 };
 
-export default function DiaryHeatmap({ diaries }: DiaryHeatmapProps) {
+export default function DiaryHeatmap({ diaries, themeMode = 'default' }: DiaryHeatmapProps) {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [isYearOpen, setIsYearOpen] = useState(false);
+  
+  // Resolve theme (handle 'night' mapping for backward compatibility if needed, or just use direct lookup)
+  // If themeMode is 'night', map to 'default'. If 'clouds', use 'clouds' (or 'default' if preferred).
+  const modeKey = themeMode === 'night' ? 'default' : themeMode;
+  const theme = themes[modeKey] || themes.default;
 
   // Process data to map date -> count
   const activityMap = useMemo(() => {
@@ -90,11 +97,11 @@ export default function DiaryHeatmap({ diaries }: DiaryHeatmapProps) {
   }, [selectedYear]);
 
   const getColor = (count: number) => {
-    if (count === 0) return "bg-white/5 border-transparent";
-    if (count === 1) return "bg-indigo-900/60 border-indigo-800/50 shadow-[0_0_5px_rgba(79,70,229,0.2)]";
-    if (count === 2) return "bg-indigo-700/80 border-indigo-600/50 shadow-[0_0_8px_rgba(79,70,229,0.4)]";
-    if (count >= 3) return "bg-indigo-400 border-indigo-300/50 shadow-[0_0_12px_rgba(129,140,248,0.6)]";
-    return "bg-white/5";
+    if (count === 0) return theme.heatmapGrid0;
+    if (count === 1) return theme.heatmapGrid1;
+    if (count === 2) return theme.heatmapGrid2;
+    if (count >= 3) return theme.heatmapGrid3;
+    return theme.heatmapGrid0;
   };
 
   return (
@@ -103,7 +110,7 @@ export default function DiaryHeatmap({ diaries }: DiaryHeatmapProps) {
         <div className="relative">
           <button
             onClick={() => setIsYearOpen(!isYearOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all"
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-full transition-all ${theme.heatmapYearBtn}`}
           >
             {selectedYear}
             <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isYearOpen ? 'rotate-180' : ''}`} />
@@ -115,7 +122,7 @@ export default function DiaryHeatmap({ diaries }: DiaryHeatmapProps) {
                   className="fixed inset-0 z-10" 
                   onClick={() => setIsYearOpen(false)} 
               />
-              <div className="absolute right-0 top-full mt-2 py-1 min-w-[120px] bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl z-20 overflow-hidden">
+              <div className={`absolute right-0 top-full mt-2 py-1 min-w-[120px] backdrop-blur-xl rounded-xl shadow-xl z-20 overflow-hidden border ${theme.heatmapDropdown}`}>
                 {availableYears.map(year => (
                   <button
                     key={year}
@@ -125,12 +132,12 @@ export default function DiaryHeatmap({ diaries }: DiaryHeatmapProps) {
                     }}
                     className={`w-full px-4 py-2 text-xs text-left transition-colors flex items-center justify-between ${
                       selectedYear === year 
-                        ? 'bg-indigo-500/20 text-indigo-300' 
-                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                        ? theme.heatmapDropdownItemActive
+                        : theme.heatmapDropdownItem
                     }`}
                   >
                     {year}
-                    {selectedYear === year && <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />}
+                    {selectedYear === year && <div className={`w-1.5 h-1.5 rounded-full ${themeMode === 'day' ? 'bg-indigo-500' : 'bg-indigo-400'}`} />}
                   </button>
                 ))}
               </div>
@@ -142,7 +149,7 @@ export default function DiaryHeatmap({ diaries }: DiaryHeatmapProps) {
       <div className="w-full overflow-x-auto pb-4 scrollbar-hide">
         <div className="min-w-max mx-auto w-fit">
         {/* Month Labels */}
-        <div className="flex mb-2 text-xs text-zinc-100 font-medium relative h-5">
+        <div className={`flex mb-2 text-xs font-medium relative h-5 ${theme.heatmapText}`}>
             {months.map((month, i) => (
                 <div 
                     key={`${month.name}-${i}`} 
@@ -156,7 +163,7 @@ export default function DiaryHeatmap({ diaries }: DiaryHeatmapProps) {
 
         <div className="flex gap-1">
           {/* Day Labels (Mon, Wed, Fri) */}
-          <div className="flex flex-col gap-1 pr-2 text-[10px] text-zinc-300 font-medium pt-[14px] w-8 text-right">
+          <div className={`flex flex-col gap-1 pr-2 text-[10px] font-medium pt-[14px] w-8 text-right ${theme.heatmapText} opacity-80`}>
             <div className="h-[10px]" /> {/* Sun */}
             <div className="h-[10px] leading-[10px]">一</div>
             <div className="h-[10px]" /> {/* Tue */}
@@ -187,12 +194,12 @@ export default function DiaryHeatmap({ diaries }: DiaryHeatmapProps) {
         </div>
 
         {/* Legend */}
-        <div className="mt-4 flex items-center justify-end gap-2 text-xs text-zinc-400">
+        <div className={`mt-4 flex items-center justify-end gap-2 text-xs ${themeMode === 'day' ? 'text-zinc-500' : 'text-zinc-400'}`}>
           <span>少</span>
-          <div className="w-[10px] h-[10px] rounded-sm bg-white/5 border border-transparent" />
-          <div className="w-[10px] h-[10px] rounded-sm bg-indigo-900/60 border border-indigo-800/50" />
-          <div className="w-[10px] h-[10px] rounded-sm bg-indigo-700/80 border border-indigo-600/50" />
-          <div className="w-[10px] h-[10px] rounded-sm bg-indigo-400 border border-indigo-300/50" />
+          <div className={`w-[10px] h-[10px] rounded-sm border transition-all ${getColor(0)}`} />
+          <div className={`w-[10px] h-[10px] rounded-sm border transition-all ${getColor(1)}`} />
+          <div className={`w-[10px] h-[10px] rounded-sm border transition-all ${getColor(2)}`} />
+          <div className={`w-[10px] h-[10px] rounded-sm border transition-all ${getColor(3)}`} />
           <span>多</span>
         </div>
       </div>

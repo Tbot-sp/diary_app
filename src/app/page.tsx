@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
-import { LogOut, Plus, Book, Calendar, Trash2, Edit3, X, ChevronDown, Tag, Filter, Search, Crown, Check, Sparkles, Sliders, Cloud, Palette } from "lucide-react";
+import { LogOut, Plus, Book, Calendar, Trash2, Edit3, X, ChevronDown, Tag, Filter, Search, Crown, Check, Sparkles, Sliders, Cloud, Palette, Sun, Moon } from "lucide-react";
 import AES from 'crypto-js/aes';
 import encUtf8 from 'crypto-js/enc-utf8';
 import DiaryHeatmap from "../components/DiaryHeatmap";
@@ -66,8 +66,25 @@ export default function Home() {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   
   // Real Background State
-  const [bgMode, setBgMode] = useState<'default' | 'clouds'>('default');
+  const [bgMode, setBgMode] = useState<'default' | 'clouds' | 'day'>('default');
   const [showBgControls, setShowBgControls] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load saved theme from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("diary_theme") as 'default' | 'clouds' | 'day';
+    if (savedTheme && ['default', 'clouds', 'day'].includes(savedTheme)) {
+      setBgMode(savedTheme);
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save theme to localStorage whenever it changes
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("diary_theme", bgMode);
+    }
+  }, [bgMode, isLoaded]);
 
   // Dynamic theme based on background mode
   const theme = themes[bgMode];
@@ -406,12 +423,23 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white selection:bg-indigo-500/30 relative overflow-hidden">
+    <div className={`min-h-screen ${theme.background} ${theme.selection} relative overflow-hidden transition-colors duration-500`}>
       {/* Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {bgMode === 'clouds' ? (
+        {bgMode === 'clouds' && (
           <div ref={vantaCloudsRef} className="absolute inset-0 z-0 transition-opacity duration-1000" />
-        ) : (
+        )}
+
+        {bgMode === 'day' && (
+           <>
+             {/* Subtle Day Gradient */}
+             <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-indigo-100/40 blur-[120px] rounded-full opacity-60 mix-blend-multiply" />
+             <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-amber-50/60 blur-[120px] rounded-full opacity-60 mix-blend-multiply" />
+             <div className="absolute top-[30%] right-[20%] w-[40%] h-[40%] bg-blue-50/50 blur-[100px] rounded-full opacity-40 mix-blend-multiply" />
+           </>
+        )}
+        
+        {bgMode === 'default' && (
           <>
             <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 blur-[120px] rounded-full animate-pulse" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse delay-1000" />
@@ -521,19 +549,32 @@ export default function Home() {
       )}
 
       {/* Navbar */}
-      <nav className="border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0 z-50">
+      <nav className={`border-b backdrop-blur-xl sticky top-0 z-50 transition-colors duration-500 ${
+        bgMode === 'day' 
+        ? 'bg-white/80 border-zinc-200 shadow-sm' 
+        : 'bg-black/40 border-white/10'
+      }`}>
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-indigo-500/10 rounded-lg">
-              <Book className="w-5 h-5 text-indigo-400" />
+            <div className={`p-2 rounded-lg ${bgMode === 'day' ? 'bg-indigo-50 text-indigo-600' : 'bg-indigo-500/10 text-indigo-400'}`}>
+              <Book className="w-5 h-5" />
             </div>
-            <span className="font-bold text-lg tracking-tight">
+            <span className={`font-bold text-lg tracking-tight ${bgMode === 'day' ? 'text-zinc-800' : 'text-white'}`}>
               <span className="sm:hidden">日記</span>
               <span className="hidden sm:inline">我的日記本</span>
             </span>
           </div>
           
           <div className="flex items-center gap-4">
+            {/* Day/Night Toggle */}
+            <button
+              onClick={() => setBgMode(bgMode === 'day' ? 'default' : 'day')}
+              className={`p-2 rounded-lg transition-all ${theme.themeToggleBtn}`}
+              title={bgMode === 'day' ? "切換至星空模式" : "切換至日間模式"}
+            >
+              {bgMode === 'day' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </button>
+
             {/* Cloud Toggle Button */}
             <button
               onClick={() => {
@@ -546,8 +587,8 @@ export default function Home() {
               }}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   bgMode === 'clouds' 
-                  ? "bg-sky-500/20 border border-sky-500/30 text-sky-200" 
-                  : "bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10"
+                  ? theme.cloudToggleBtnActive 
+                  : theme.cloudToggleBtn
               }`}
               title="切換沈浸背景"
             >
@@ -563,18 +604,18 @@ export default function Home() {
                 });
                 setIsUpgradeModalOpen(true);
               }}
-              className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg text-amber-200 text-sm font-medium transition-all hover:scale-105"
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all hover:scale-105 border ${theme.proBtn}`}
             >
-              <Crown className="w-4 h-4 text-amber-400" />
+              <Crown className={`w-4 h-4 ${theme.proBtnIcon}`} />
               <span className="sm:hidden">升級 Pro</span>
               <span className="hidden sm:inline">升級 Pro</span>
             </button>
-            <div className="hidden sm:block text-sm text-zinc-400">
-              嗨，<span className="text-white font-medium">{userId}</span>
+            <div className={`hidden sm:block text-sm ${theme.textSecondary}`}>
+              嗨，<span className={`font-medium ${theme.textMain}`}>{userId}</span>
             </div>
             <button 
               onClick={handleLogout}
-              className="p-2 hover:bg-white/5 rounded-lg transition-colors text-zinc-400 hover:text-white"
+              className={`p-2 rounded-lg transition-colors ${theme.logoutBtn}`}
               title="登出"
             >
               <LogOut className="w-5 h-5" />
@@ -680,9 +721,9 @@ export default function Home() {
                       <label className={`text-xs font-bold ${theme.textMuted} uppercase tracking-[0.2em] ml-1`}>標籤 (最多3個)</label>
                       <div className={`flex flex-wrap gap-2 mb-2 p-3 ${theme.tagContainer} rounded-2xl`}>
                         {tags.map(tag => (
-                          <span key={tag} className="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-sm flex items-center gap-1 border border-indigo-500/30">
+                          <span key={tag} className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${theme.tagItem}`}>
                             {tag}
-                            <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-white transition-colors"><X className="w-3 h-3" /></button>
+                            <button type="button" onClick={() => handleRemoveTag(tag)} className={`transition-colors ${bgMode === 'day' ? 'hover:text-indigo-900 text-indigo-400' : 'hover:text-white text-indigo-400'}`}><X className="w-3 h-3" /></button>
                           </span>
                         ))}
                         <div className="relative flex items-center flex-1 min-w-[120px]">
@@ -693,13 +734,13 @@ export default function Home() {
                               onKeyDown={handleAddTag}
                               placeholder={tags.length >= 3 ? "標籤已滿" : "輸入標籤按 Enter 添加..."}
                               disabled={tags.length >= 3}
-                              className="bg-transparent py-1 px-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none w-full"
+                              className={`bg-transparent py-1 px-2 text-sm focus:outline-none w-full ${theme.tagInput}`}
                             />
                              <button 
                                 type="button" 
                                 onClick={handleAddTag} 
                                 disabled={!tagInput.trim() || tags.length >= 3} 
-                                className="ml-2 p-1 bg-white/5 hover:bg-indigo-500 rounded-lg text-zinc-500 hover:text-white disabled:opacity-50 transition-all"
+                                className={`ml-2 p-1 rounded-lg disabled:opacity-50 transition-all ${theme.tagAddBtn}`}
                              >
                                 <Plus className="w-4 h-4" />
                              </button>
@@ -714,7 +755,7 @@ export default function Home() {
                                     key={t._id}
                                     type="button"
                                     onClick={() => handleSelectTag(t.name)}
-                                    className="text-xs px-2.5 py-1 bg-white/5 hover:bg-indigo-500/20 border border-white/5 hover:border-indigo-500/30 rounded-lg text-zinc-400 hover:text-indigo-300 transition-all"
+                                    className={`text-xs px-2.5 py-1 rounded-lg transition-all ${theme.tagSuggestion}`}
                                 >
                                     {t.name}
                                 </button>
@@ -747,14 +788,14 @@ export default function Home() {
         {diaries && (
             <section className="w-full animate-fade-in">
                  <div className={`${theme.card} rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden group`}>
-                    <h3 className={`text-lg font-bold ${bgMode === 'clouds' ? 'text-white' : 'text-zinc-400'} mb-6 flex items-center gap-2 tracking-wide relative z-10`}>
-                        <div className="p-1.5 bg-indigo-500/10 rounded-lg">
-                            <Calendar className="w-4 h-4 text-indigo-400" />
+                    <h3 className={`text-lg font-bold ${bgMode === 'day' ? 'text-zinc-800' : (bgMode === 'clouds' ? 'text-white' : 'text-zinc-400')} mb-6 flex items-center gap-2 tracking-wide relative z-10`}>
+                        <div className={`p-1.5 rounded-lg ${bgMode === 'day' ? 'bg-indigo-50 text-indigo-600' : 'bg-indigo-500/10 text-indigo-400'}`}>
+                            <Calendar className="w-4 h-4" />
                         </div>
                         記錄足跡
                     </h3>
                     <div className="relative z-10">
-                        <DiaryHeatmap diaries={diaries} />
+                        <DiaryHeatmap diaries={diaries} themeMode={bgMode === 'day' ? 'day' : 'night'} />
                     </div>
                     
                     {/* Subtle card glow on hover */}
@@ -770,10 +811,10 @@ export default function Home() {
         <section className="space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/5 pb-4 gap-4">
             <h2 className="text-2xl font-bold flex items-center gap-3">
-              <div className="p-2 bg-indigo-500/10 rounded-xl">
-                <Book className="w-6 h-6 text-indigo-400" />
+              <div className={`p-2 rounded-xl ${bgMode === 'day' ? 'bg-indigo-50 text-indigo-600' : 'bg-indigo-500/10 text-indigo-400'}`}>
+                <Book className="w-6 h-6" />
               </div>
-              過往回憶
+              <span className={bgMode === 'day' ? 'text-zinc-800' : 'text-white'}>過往回憶</span>
             </h2>
             
             <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start gap-4">
@@ -802,7 +843,7 @@ export default function Home() {
                           <div className="fixed inset-0 z-40" onClick={() => setIsTagFilterOpen(false)} />
                           
                           {/* Dropdown Panel */}
-                          <div className="absolute right-0 top-full mt-2 w-64 sm:w-72 max-w-[calc(100vw-2rem)] bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
+                          <div className={`absolute right-0 top-full mt-2 w-64 sm:w-72 max-w-[calc(100vw-2rem)] ${theme.dropdownBg} ${theme.dropdownBorder} border rounded-2xl ${theme.dropdownShadow} z-50 p-4 animate-in fade-in zoom-in-95 duration-200`}>
                               <div className="relative mb-3">
                                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                   <input
@@ -811,17 +852,17 @@ export default function Home() {
                                       value={tagSearchQuery}
                                       onChange={(e) => setTagSearchQuery(e.target.value)}
                                       autoFocus
-                                      className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
+                                      className={`w-full ${theme.dropdownInputBg} ${theme.dropdownInputBorder} border rounded-xl py-2 pl-9 pr-4 text-sm ${theme.dropdownInputText} ${theme.dropdownInputPlaceholder} focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all`}
                                   />
                               </div>
 
-                              <div className="max-h-[300px] overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                              <div className={`max-h-[300px] overflow-y-auto space-y-1 pr-1 ${theme.dropdownScrollbar}`}>
                                   <button
                                       onClick={() => { setFilterTag(null); setIsTagFilterOpen(false); }}
                                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2 ${
                                           filterTag === null
-                                              ? "bg-indigo-500/20 text-indigo-300"
-                                              : "hover:bg-white/5 text-zinc-400 hover:text-white"
+                                              ? theme.heatmapDropdownItemActive
+                                              : `${theme.dropdownItemText} ${theme.dropdownItemHoverBg} ${theme.dropdownItemHoverText}`
                                       }`}
                                   >
                                       <span className="w-2 h-2 rounded-full bg-current opacity-50" />
@@ -836,11 +877,11 @@ export default function Home() {
                                           onClick={() => { setFilterTag(t.name); setIsTagFilterOpen(false); }}
                                           className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2 group ${
                                               filterTag === t.name
-                                                  ? "bg-indigo-500/20 text-indigo-300"
-                                                  : "hover:bg-white/5 text-zinc-400 hover:text-white"
-                                          }`}
+                                                  ? theme.heatmapDropdownItemActive
+                                                  : `${theme.dropdownItemText} ${theme.dropdownItemHoverBg} ${theme.dropdownItemHoverText}`
+                                      }`}
                                       >
-                                          <Tag className={`w-3.5 h-3.5 ${filterTag === t.name ? "text-indigo-400" : "text-zinc-600 group-hover:text-zinc-400"}`} />
+                                          <Tag className="w-3.5 h-3.5 opacity-70" />
                                           {t.name}
                                       </button>
                                   ))}
@@ -882,21 +923,21 @@ export default function Home() {
                 >
                   <div className="flex justify-between items-start mb-6 relative z-10">
                     <div className="space-y-2">
-                        <h3 className="text-xl font-bold text-zinc-100 group-hover:text-indigo-300 transition-colors leading-tight flex items-center gap-2">
+                        <h3 className={`text-xl font-bold transition-colors leading-tight flex items-center gap-2 ${bgMode === 'day' ? 'text-zinc-800 group-hover:text-indigo-600' : 'text-zinc-100 group-hover:text-indigo-300'}`}>
                           <span>{decrypt(diary.title)}</span>
                           {decryptMood(diary.mood) && <span className="text-2xl" title="當時的心情">{decryptMood(diary.mood)}</span>}
                         </h3>
                         {diary.tags && diary.tags.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-2">
                             {diary.tags.map(tag => (
-                              <span key={tag} className="text-xs px-2 py-1 bg-indigo-500/10 text-indigo-300 rounded-md border border-indigo-500/20 flex items-center gap-1">
+                              <span key={tag} className={`text-xs px-2 py-1 rounded-md flex items-center gap-1 ${bgMode === 'day' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20'}`}>
                                 <Tag className="w-3 h-3" />
                                 {tag}
                               </span>
                             ))}
                           </div>
                         )}
-                        <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-widest pt-1">
+                        <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-widest pt-1 ${bgMode === 'day' ? 'text-zinc-400' : 'text-zinc-500'}`}>
                         <Calendar className="w-3.5 h-3.5" />
                         {new Date(diary._creationTime).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                       </div>
@@ -1103,13 +1144,13 @@ export default function Home() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => setReadingDiary(null)}
           />
-          <div className="relative w-full max-w-3xl h-[80vh] overflow-y-auto bg-zinc-900/95 border border-white/10 rounded-3xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
+          <div className={`relative w-full max-w-3xl h-[80vh] overflow-y-auto ${theme.modalBg} border ${theme.modalBorder} rounded-3xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 custom-scrollbar`}>
             
             {/* Modal Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/5 bg-zinc-900/95 backdrop-blur-xl">
+            <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b ${theme.modalHeaderBorder} ${theme.modalHeaderBg}`}>
                {/* Date & Mood */}
                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 text-sm font-bold text-zinc-500 uppercase tracking-widest">
+                  <div className={`flex items-center gap-2 text-sm font-bold ${theme.textMuted} uppercase tracking-widest`}>
                     <Calendar className="w-4 h-4" />
                     {new Date(readingDiary._creationTime).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                   </div>
@@ -1125,14 +1166,14 @@ export default function Home() {
                         setReadingDiary(null);
                         handleEdit(readingDiary);
                     }}
-                    className="p-2 hover:bg-white/5 rounded-full text-zinc-400 hover:text-indigo-400 transition-colors"
+                    className={`p-2 rounded-full transition-colors ${theme.modalCloseBtn}`}
                     title="編輯"
                   >
                     <Edit3 className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={() => setReadingDiary(null)}
-                    className="p-2 hover:bg-white/5 rounded-full text-zinc-400 hover:text-white transition-colors"
+                    className={`p-2 rounded-full transition-colors ${theme.modalCloseBtn}`}
                   >
                     <X className="w-6 h-6" />
                   </button>
@@ -1141,14 +1182,14 @@ export default function Home() {
 
             {/* Modal Content */}
             <div className="p-8 space-y-6">
-               <h2 className="text-3xl font-bold text-white leading-tight">
+               <h2 className={`text-3xl font-bold ${theme.modalTitle} leading-tight`}>
                  {decrypt(readingDiary.title)}
                </h2>
                
                {readingDiary.tags && readingDiary.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {readingDiary.tags.map(tag => (
-                      <span key={tag} className="text-xs px-2.5 py-1 bg-indigo-500/10 text-indigo-300 rounded-md border border-indigo-500/20 flex items-center gap-1">
+                      <span key={tag} className={`text-xs px-2.5 py-1 ${theme.tagItem} rounded-md flex items-center gap-1`}>
                         <Tag className="w-3 h-3" />
                         {tag}
                       </span>
@@ -1157,7 +1198,7 @@ export default function Home() {
                )}
 
                <div className="prose prose-invert max-w-none">
-                 <p className="text-zinc-300 text-lg leading-loose whitespace-pre-wrap">
+                 <p className={`${theme.modalContent} text-lg leading-loose whitespace-pre-wrap`}>
                    {decrypt(readingDiary.content)}
                  </p>
                </div>
