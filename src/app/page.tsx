@@ -423,24 +423,23 @@ export default function Home() {
   }
 
   return (
-    <div className={`min-h-screen ${theme.background} ${theme.selection} relative overflow-hidden transition-colors duration-500`}>
+    <div className={`min-h-screen ${theme.background} ${theme.selection} relative overflow-hidden`}>
       {/* Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         {bgMode === 'clouds' && (
-          <div ref={vantaCloudsRef} className="absolute inset-0 z-0 transition-opacity duration-1000" />
+          <div ref={vantaCloudsRef} className="absolute inset-0 z-0" />
         )}
 
-        {bgMode === 'day' && (
-           <>
+        {/* Day Mode Background */}
+        <div className={`absolute inset-0 ${bgMode === 'day' ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
              {/* Subtle Day Gradient */}
              <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-indigo-100/40 blur-[120px] rounded-full opacity-60 mix-blend-multiply" />
              <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-amber-50/60 blur-[120px] rounded-full opacity-60 mix-blend-multiply" />
              <div className="absolute top-[30%] right-[20%] w-[40%] h-[40%] bg-blue-50/50 blur-[100px] rounded-full opacity-40 mix-blend-multiply" />
-           </>
-        )}
+        </div>
         
-        {bgMode === 'default' && (
-          <>
+        {/* Night Mode Background */}
+        <div className={`absolute inset-0 ${bgMode === 'default' ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
             <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 blur-[120px] rounded-full animate-pulse" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse delay-1000" />
             <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-blue-600/5 blur-[100px] rounded-full animate-bounce duration-[10000ms] opacity-50" />
@@ -462,8 +461,7 @@ export default function Home() {
                 }}
               />
             ))}
-          </>
-        )}
+        </div>
       </div>
 
       {/* Cloud Controls Panel */}
@@ -549,7 +547,7 @@ export default function Home() {
       )}
 
       {/* Navbar */}
-      <nav className={`border-b backdrop-blur-xl sticky top-0 z-50 transition-colors duration-500 ${
+      <nav className={`border-b backdrop-blur-xl sticky top-0 z-50 ${
         bgMode === 'day' 
         ? 'bg-white/80 border-zinc-200 shadow-sm' 
         : 'bg-black/40 border-white/10'
